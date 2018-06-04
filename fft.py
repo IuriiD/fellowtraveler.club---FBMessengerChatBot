@@ -98,6 +98,18 @@ def get_language(user_id):
     return language
 
 
+def get_user_firt_name(user_id):
+    '''
+        Retrieves user first name using Facebook Graph API for a user with user_id
+    '''
+    user_first_name = graph.get_object(id=str(user_id),
+                                       fields='first_name')  # {'id': '19xxxxxxxxxxx052', 'first_name': 'Iurii'}
+    if user_first_name.get('first_name'):
+        return user_first_name.get('first_name')
+    else:
+        return False
+
+
 def send_message(user_id, our_message):
     '''
     Sends a our_message to FB user with recipient_id
@@ -301,10 +313,6 @@ def get_help(user_id):
     ])
 
 
-############################################ Functions END #######################################
-
-################### Handlers for Persistent Menu clicks - START ##################################
-
 def getting_started(user_id):
     '''
         User clicks either 'Getting started' button when launching the bot or button 'Start' from Persistent menu
@@ -322,11 +330,11 @@ def getting_started(user_id):
 
     if 'if_journey_info_needed' not in CONTEXTS:
         CONTEXTS.clear()
-        user_first_name = graph.get_object(id=str(user_id), fields='first_name') # {'id': '19xxxxxxxxxxx052', 'first_name': 'Iurii'}
-        print('user_first_name - {}'.format(user_first_name.get('first_name')))
+
+        first_name = get_user_firt_name(user_id)
         user_name = ''
-        if user_first_name.get('first_name'):
-            user_name = ', {}'.format(user_first_name.get('first_name'))
+        if first_name:
+            user_name = ', {}'.format(first_name)
 
         # message0 = 'Hello'
         message = '{}{}!'.format(L10N['message0'][USER_LANGUAGE], user_name)
@@ -463,7 +471,171 @@ def change_language(user_id):
     print('User entered "/change_language"')
     print('Contexts: {}'.format(CONTEXTS))
 
-#################### Handlers for Persistent Menu clicks - END ###################################
+
+def text_handler(user_id, from_user, message):
+    '''
+        Handling all text input (NLP using Dialogflow and then depending on recognised intent and contexts variable
+    '''
+    global CONTEXTS
+    global USER_LANGUAGE
+    # A fix intended not to respond to every image uploaded (if several)
+    ##respond_to_several_photos_only_once()
+
+    # Get input data
+    users_input = message
+    chat_id = user_id
+
+    if USER_LANGUAGE == None:
+        USER_LANGUAGE = get_language(user_id)
+
+    # And pass it to the main handler function [main_hadler()]
+    main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=None, media=False, other_input=False)
+
+
+def button_click_handler(user_id, from_user, button_payload):
+    '''
+        Handling clicks on buttons (except for Persistent menu and 'Getting started')
+
+        All possible buttons (10)
+        Yes | No, thanks | Cancel | Help | You got Teddy? | Teddy's story | Next | Contact support | Instructions | Add location
+        Buttons | Instructions | Add location | are available only after entering secret code
+        Buttons | You got Teddy? | Teddy's story | Help | Contact Support | are activated irrespective of context,
+        Buttons | Instructions | Add location | are activated always in context 'code_correct',
+        other buttons ( Yes | No, thanks | Cancel | Next) - depend on context, if contexts==[] or irrelevant context - they
+        should return a response for a Fallback_Intent
+    '''
+    global CONTEXTS
+    global USER_LANGUAGE
+    # A fix intended not to respond to every image uploaded (if several)
+    #respond_to_several_photos_only_once()
+
+    # Get input data
+    users_input = button_payload
+    chat_id = user_id
+
+    # Get user language from message
+    if not USER_LANGUAGE:
+        USER_LANGUAGE = get_language(user_id)
+
+    # And pass it to the main handler function [main_hadler()]
+    main_handler(users_input, chat_id, from_user, is_btn_click=True, geodata=None, media=False, other_input=False)
+
+
+def location_handler(user_id, from_user, lat, long):
+    '''
+        Handling location input
+    '''
+    global CONTEXTS
+    global NEWLOCATION
+    global USER_LANGUAGE
+    # A fix intended not to respond to every image uploaded (if several)
+    #respond_to_several_photos_only_once()
+
+    # Get input data
+    users_input = 'User posted location'
+    chat_id = user_id
+
+    if USER_LANGUAGE == None:
+        USER_LANGUAGE = USER_LANGUAGE = get_language(user_id)
+
+    # And pass it to the main handler function [main_hadler()]
+    main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata={'lat': lat, 'lng': long}, media=False, other_input=False)
+
+
+def photo_handler(user_id, from_user, img_url):
+    '''
+        Looks like in FB as distinct from Telegram several images sent by user come in one message (though in separate
+        dictionaries inside of entry[x].messaging[y].message.attachments[...]
+    '''
+    global NEWLOCATION
+    global CONTEXTS
+    global USER_LANGUAGE
+
+    # Get input data
+    chat_id = user_id
+
+    if USER_LANGUAGE == None:
+        USER_LANGUAGE = get_language(user_id)
+
+    # Get, save photos, add paths to NEWLOCATION['photos]
+    if 'media_input' in CONTEXTS:
+        # https://scontent.xx.fbcdn.net/v/t1.15752-9/34416397_446356285788138_8430653788502622208_n.jpg?_nc_cat=0&_nc_ad=z-m&_nc_cid=0&oh=c7c985bab096d0646ea5333064ff6651&oe=5B7F0DD6
+        file_name_wo_extension = 'fellowtravelerclub-{}'.format(OURTRAVELLER)
+        img_url_part1 = img_url.split('?_nc_cat')[0]
+        file_extension = img_url_part1.split('.')[-1]
+        current_datetime = datetime.now().strftime("%d%m%y%H%M%S")
+        random_int = random.randint(100, 999)
+        path4db = file_name_wo_extension + '-' + current_datetime + str(random_int) + file_extension
+        path = PHOTO_DIR + path4db
+
+        r = requests.get(img_url, timeout=0.5)
+        if r.status_code == 200:
+            with open(path, 'wb') as f:
+                f.write(r.content)
+        NEWLOCATION['photos'].append(path4db)
+        users_input = 'User posted a photo'
+
+        # Contexts - indicate that last input was an image
+        if 'last_input_media' not in CONTEXTS:
+            CONTEXTS.append('last_input_media')
+            users_input = 'User uploaded an image'
+            main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=None, media=True,
+                         other_input=False)
+    else:
+        if 'last_input_media' not in CONTEXTS:
+            CONTEXTS.append('last_input_media')
+            users_input = 'Nice image ;)'
+            print('Really true!')
+            print('CONTEXTS: {}'.format(CONTEXTS))
+            main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=None, media=True, other_input=False)
+
+
+def other_content_types_handler(user_id, from_user):
+    '''
+        Handling other content types (audio, file, stickers (as images but with field 'sticker_id')
+    '''
+    global CONTEXTS
+    global NEWLOCATION
+    global USER_LANGUAGE
+    # A fix intended not to respond to every image uploaded (if several)
+    #respond_to_several_photos_only_once()
+
+    # Get input data
+    users_input = ';)'  # User entered something different from text, button_click, photo or location
+    chat_id = user_id
+
+    if USER_LANGUAGE == None:
+        USER_LANGUAGE = get_language(user_id)
+
+    # And pass it to the main handler function [main_hadler()]
+    main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=None, media=False,
+                 other_input=True)
+
+
+def dialogflow(query, user_id, lang_code='en'):
+    '''
+        Function to communicate with Dialogflow for NLU
+    '''
+    URL = 'https://api.dialogflow.com/v1/query?v=20170712'
+    print('USER_LANGUAGE: ' + lang_code)
+    HEADERS = {'Authorization': 'Bearer ' + DF_TOKEN, 'content-type': 'application/json'}
+    payload = {'query': query, 'sessionId': user_id, 'lang': lang_code}
+    r = requests.post(URL, data=json.dumps(payload), headers=HEADERS).json()
+    print('#####')
+    print('Request from DF: ')
+    print(r)
+    print('#####')
+    intent = r.get('result').get('metadata').get('intentName')
+    speech = r.get('result').get('fulfillment').get('speech')
+    status = r.get('status').get('code')
+    output = {
+        'status': status,
+        'intent': intent,
+        'speech': speech
+    }
+    return output
+
+############################################ Functions END #######################################
 
 
 @app.route("/")
@@ -495,13 +667,21 @@ def message_webhook():
                 if entry.get('messaging'):
                     for message in entry.get('messaging'):
                         if message.get('message') or message.get('postback'):
+                            # Get user ID
                             user_id = message.get('sender').get('id')
 
-                            # Text messages (emoji also get here)
+                            # Get user first name
+                            user_first_name = get_user_firt_name(user_id)
+                            from_user = ''
+                            if user_first_name:
+                                from_user = user_first_name
+
+                            # Text messages (emoji also get here - may filter out later)
                             if message.get('message'):
                                 if message.get('message').get('text') and not message.get('message').get('is_echo'):
                                     user_wrote = message.get('message').get('text').encode('unicode_escape')
-                                    send_message(user_id, {'text': 'You said "{}'.format(user_wrote.decode('unicode_escape'))})
+                                    text_handler(user_id, from_user, user_wrote)
+                                    #send_message(user_id, {'text': 'You said "{}'.format(user_wrote.decode('unicode_escape'))})
 
                                 # Attachments
                                 if message.get('message').get('attachments'):
@@ -510,40 +690,45 @@ def message_webhook():
                                         # Images (photos from camera, gifs, likes also get here)
                                         if attachment.get('type') == 'image' and not attachment.get('payload').get(
                                                 'sticker_id'):
+                                            img_url = attachment.get('payload').get('url')
                                             send_message(user_id, {
-                                                'text': 'Img url "{}'.format(attachment.get('payload').get('url'))})
+                                                'text': 'Img url "{}'.format(img_url)})
+                                            photo_handler(user_id, from_user, img_url)
 
                                         # Location
                                         elif attachment.get('type') == 'location':
                                             latitude = attachment.get('payload').get('coordinates').get('lat')
                                             longitude = attachment.get('payload').get('coordinates').get('long')
+                                            location_handler(user_id, from_user, latitude, longitude)
 
                                         # Other content types - audio, file, stickers (as images but with field 'sticker_id')
                                         else:
                                             print('Other content types')
+                                            other_content_types_handler(user_id, from_user)
 
                             # Button clicks; persistent menu and 'Getting started' button send fixed postback in English,
                             # other buttons send postback = title in corresponding language, which is then passed to
                             # Dialogflow for NLU (thus the same commands as for these buttons can be triggered with usual text)
                             if message.get('postback') and message.get('postback').get('payload'):
-                                button_postback = message.get('postback').get('payload')
+                                button_payload = message.get('postback').get('payload')
                                 # Two main cases:
-                                # 1. Persistent menu buttons
-                                if button_postback == 'GETTING_STARTED' or button_postback == 'START_TRIGGER':
+                                # 1. Persistent menu buttons and 'Getting started' button
+                                if button_payload == 'GETTING_STARTED' or button_payload == 'START_TRIGGER':
                                     getting_started(user_id)
 
-                                elif button_postback == 'FAQ':
+                                elif button_payload == 'FAQ':
                                     help(user_id)
 
-                                elif button_postback == 'CHANGE_LANGUAGE':
+                                elif button_payload == 'CHANGE_LANGUAGE':
                                     change_language(user_id)
 
-                                elif button_postback == 'YOU_GOT_FELLOW_TRAVELER':
+                                elif button_payload == 'YOU_GOT_FELLOW_TRAVELER':
                                     you_got_fellowtraveler(user_id)
 
                                 # 2. All other buttons
                                 else:
-                                    pass
+                                    button_payload = message.get('postback').get('payload')
+                                    button_click_handler(user_id, from_user, button_payload)
 
         return "Success", 200
 
