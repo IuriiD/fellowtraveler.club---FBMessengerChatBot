@@ -45,14 +45,14 @@ L10N = {
         'uk': 'Що робитимемо далі?'
     },
     'message9': {
-        'en': 'Your message was successfully sent to my author\n(<b>iurii.dziuban@gmail.com</b>).\nWhat would you like to do next?',
-        'ru': 'Ваше сообщение было успешно отправлено моему автору\n(<b>iurii.dziuban@gmail.com</b>).\nЧто будем делать дальше?',
-        'uk': 'Ваше повідомлення було успішно відправлене моєму автору\n(<b>iurii.dziuban@gmail.com</b>).\nЩо робитимемо далі?'
+        'en': 'Your message was successfully sent to my author\n(iurii.dziuban@gmail.com).\nWhat would you like to do next?',
+        'ru': 'Ваше сообщение было успешно отправлено моему автору\n(iurii.dziuban@gmail.com).\nЧто будем делать дальше?',
+        'uk': 'Ваше повідомлення було успішно відправлене моєму автору\n(iurii.dziuban@gmail.com).\nЩо робитимемо далі?'
     },
     'message10': {
-        'en': 'Some problems occured when trying to send your message to my author (<b>iurii.dziuban@gmail.com</b>). Could you please write to his email yourself? Sorry for that..',
-        'ru': 'При попытке отправки Вашего сообщения моему автору (<b>iurii.dziuban@gmail.com</b>) возникли некоторые проблемы. Не могли бы Вы сами написать ему на email? Извините за неудобства...',
-        'uk': 'При спробі відправити Ваше повідомлення моєму автору (<b>iurii.dziuban@gmail.com</b>) виникли деякі проблеми. Не могли б Ві самі написати йому на email? Вибачте за незручності...'
+        'en': 'Some problems occured when trying to send your message to my author (iurii.dziuban@gmail.com). Could you please write to his email yourself? Sorry for that..',
+        'ru': 'При попытке отправки Вашего сообщения моему автору (iurii.dziuban@gmail.com) возникли некоторые проблемы. Не могли бы Вы сами написать ему на email? Извините за неудобства...',
+        'uk': 'При спробі відправити Ваше повідомлення моєму автору (iurii.dziuban@gmail.com) виникли деякі проблеми. Не могли б Ві самі написати йому на email? Вибачте за незручності...'
     },
     'message11': {
         'en': 'Sorry but I can send only text. Please type something ;)',
@@ -85,9 +85,9 @@ L10N = {
         'uk': 'Хочете побачити усі місця, в яких я побував?'
     },
     'message17': {
-        'en': 'Any problems, questions, suggestions, remarks, proposals etc? Please enter them below or write to my author\'s email  <b>iurii.dziuban@gmail.com</b>\n\n You may also consider visiting <a href="https://iuriid.github.io">iuriid.github.io</a>.',
-        'ru': 'Проблемы, вопросы, предложения, замечания, советы? Пожалуйста, введите их ниже или напишите моему автору на email<b>iurii.dziuban@gmail.com</b>\n\nВозможно, Вам также будет интересно посетить <a href="https://iuriid.github.io">iuriid.github.io</a>.',
-        'uk': 'Проблеми, запитання, пропозиції, зауваження, поради? Будь ласка, введіть їх нижче або напишіть моєму автору на email<b>iurii.dziuban@gmail.com</b>\n\nМожливо, Вам також буде цікаво відвідати <a href="https://iuriid.github.io">iuriid.github.io</a>.'
+        'en': 'Any problems, questions, suggestions, remarks, proposals etc? Please enter them below or write to my author\'s email  iurii.dziuban@gmail.com\n\n You may also consider visiting iuriid.github.io.',
+        'ru': 'Проблемы, вопросы, предложения, замечания, советы? Пожалуйста, введите их ниже или напишите моему автору на email iurii.dziuban@gmail.com\n\nВозможно, Вам также будет интересно посетить iuriid.github.io.',
+        'uk': 'Проблеми, запитання, пропозиції, зауваження, поради? Будь ласка, введіть їх нижче або напишіть моєму автору на email iurii.dziuban@gmail.com\n\nМожливо, Вам також буде цікаво відвідати iuriid.github.io.'
     },
     'message18': {
         'en': 'Code correct, thanks! Sorry for formalities',
@@ -98,24 +98,24 @@ L10N = {
         'en': 'As I might have said, my goal is to see the world.'
              '\n\n And as your fellow traveler I will kindly ask you for 2 things:'
              '\n- Please show me some nice places of your city/country or please take me with you if you are traveling somewhere. '
-             'Please document where I have been using the button "<b>Add location</b>".'
+             'Please document where I have been using the button "Add location".'
              '\n - After some time please pass me to somebody else ;)'
-             '\n\n For more detailed instructions - please click "<b>Instructions</b>"'
-             '\n\nIf you\'ve got some problems, you can also write to my author (button "<b>Contact support</b>")',
+             '\n\n For more detailed instructions - please click "Instructions"'
+             '\n\nIf you\'ve got some problems, you can also write to my author (button "Contact support")',
         'ru': 'Как я уже, наверное, говорил, моя мечта - увидеть мир.'
              '\n\nИ как Ваш попутчик, я попрошу Вас о 2 вещах:'
              '\n- Пожалуйста, покажите мне интересные места Вашего города/страны или возьмите с собой, если путешествуете. '
-             'Пожалуйста, регистрируйте где я бываю, используя кнопку "<b>Добавить местонахождение</b>".'
+             'Пожалуйста, регистрируйте где я бываю, используя кнопку "Добавить местонахождение".'
              '\n - Через некоторое время, пожалуйста, передайте меня кому-то еще ;)'
-             '\n\nЧтобы получить более подробные инструкции, пожалуйста, кликните кнопку "<b>Инструкции</b>"'
-             '\n\nЕсли у Вас возникли проблемы, Вы также можете написать моему автору (кнопка "<b>Техподдержка</b>")',
+             '\n\nЧтобы получить более подробные инструкции, пожалуйста, кликните кнопку "Инструкции"'
+             '\n\nЕсли у Вас возникли проблемы, Вы также можете написать моему автору (кнопка "Техподдержка")',
         'uk': 'Як я уже, напевно, казав, моя мрія - побачити світ.'
              '\n\nІ як Ваш попутник, я попрошу Вас про 2 речі:'
              '\n- Будь ласка, покажіть мені цікаві місця Вашого міста/країни або візьміть із собою, якщо подорожуєте. '
-             'Будь ласка, фіксуйте де я буваю, використовуючи кнопку "<b>Додати місцезнаходження</b>".'
+             'Будь ласка, фіксуйте де я буваю, використовуючи кнопку "Додати місцезнаходження".'
              '\n - Через деякий час, будь ласка, передайте мене комусь іншому ;)'
-             '\n\nЩоб отримати більш детальні інструкції, будь ласка, клікніть кнопку "<b>Інструкції</b>"'
-             '\n\nЯкщо у Вас виникли проблеми, Ви також можете написати моєму автору (кнопка "<b>Техпідтримка</b>")'
+             '\n\nЩоб отримати більш детальні інструкції, будь ласка, клікніть кнопку "Інструкції"'
+             '\n\nЯкщо у Вас виникли проблеми, Ви також можете написати моєму автору (кнопка "Техпідтримка")'
     },
     'message20': {
         'en': 'Incorrect secret code. Please try again',
@@ -129,14 +129,14 @@ L10N = {
     },
     # messages 22-23 - one sentence
     'message22': {
-        'en': 'First please tell <i>where</i>',
+        'en': 'First please tell where',
         'ru': 'Для начала, пожалуйста, укажите где',
         'uk': 'Для початку, будь ласка, вкажіть де'
     },
     'message23': {
-        'en': '<i>is now</i> (you may use the button \"<b>Share your location</b>\" below) \n\nor \n\n<i>where he was</i> photographed (to enter address which differs from your current location please <b>attach >> Location</b> and drag the map to desired place)',
-        'ru': '<i>сейчас</i> (Вы можете воспользоваться кнопкой \"<b>Поделиться местоположением/Share your location</b>\" ниже) \n\nили \n\n<i>где он был</i> сфотографирован (чтобы ввести адрес, который отличается от Вашего текущего местонахождения, пожалуйста <b>прикрепите >> Местонахождение/Location</b> и перетягивая карту, расположите маркер в нужном месте)',
-        'uk': '<i>зараз</i> (Ви можете скористатись кнопкою \"<b>Поділитись місцезнаходженням/Share your location</b>\" нижче) \n\nабо \n\n<i>де він був</i> сфотографований (щоб ввести адресу, яка відрізнається від Вашого поточного місцезнаходження, будь ласка, <b>прикріпіть >> Місцезнаходження/Location</b> і перетягуючи карту, розташуйте маркер у потрібному місці)'
+        'en': 'is now or where he was photographed. Please use the button \"Send location\" below, drag marker to desired place if needed',
+        'ru': 'сейчас или где он был сфотографирован. Пожалуйста, воспользуйтесь кнопкой \"Отправить местоположение/Send location\" ниже, при необходимости перетяните маркер в нужное место',
+        'uk': 'зараз або де він був сфотографований. Будь ласка, скористайтесь кнопкою \"Відправити місцезнаходження/Send location\" нижче, за необхідності перетягніть маркер у потрібне місце'
     },
     # messages 24-26 - one sentence
     'message24': {
@@ -191,9 +191,9 @@ L10N = {
         'uk': 'Ваша публікація буде виглядати наступним чином:'
     },
     'message34': {
-        'en': 'Is that Ok? If yes, please click \"<b>Submit</b>\".\nOtherwise click \"<b>Reset</b>\" to start afresh',
-        'ru': 'Если все в порядке, пожалуйста, кликните \"<b>Отправить</b>\".\nВ противном случае нажмите \"<b>Сброс</b>\", чтобы начать сначала',
-        'uk': 'Якщо все гаразд, будь ласка, клікніть \"<b>Відправити</b>\".\nВ інакшому випадку натисніть \"<b>Скинути</b>\", щоб почати спочатку'
+        'en': 'Is that Ok? If yes, please click \"Submit\".\nOtherwise click \"Reset\" to start afresh',
+        'ru': 'Если все в порядке, пожалуйста, кликните \"Отправить\".\nВ противном случае нажмите \"Сброс\", чтобы начать сначала',
+        'uk': 'Якщо все гаразд, будь ласка, клікніть \"Відправити\".\nВ інакшому випадку натисніть \"Скинути\", щоб почати спочатку'
     },
     'message35': {
         'en': 'Hmm.. Some error occured. Could you please try again?',
@@ -237,9 +237,9 @@ L10N = {
         'uk': 'комусь, будь ласка, обов\'язково запишіть цей код таким же способом, як Ви його отримали'
     },
     'message43': {
-        'en': 'Hmm... Sorry, but for some reason I failed to save your data to database.\nI informed my author (<b>iurii.dziuban@gmail.com</b>) about this and hope that he finds the reason soon.\nSorry for inconveniences..',
-        'ru': 'Хм.. Извините, но по некой причине сохранить Ваши данные в базу данных не удалось.\nЯ проинформировал своего автора (<b>iurii.dziuban@gmail.com</b>) об этом и надеюсь, что он быстро разберется.\nИзвините за неудобства..',
-        'uk': 'Хм.. Вибачте, але я певної причини зберегти Ваші дані у базі данних не вдалося.\nЯ проінформував свого автора (<b>iurii.dziuban@gmail.com</b>) про це і сподіваюсь, що він швидко розбереться.\nВибачте за незручності..'
+        'en': 'Hmm... Sorry, but for some reason I failed to save your data to database.\nI informed my author (iurii.dziuban@gmail.com) about this and hope that he finds the reason soon.\nSorry for inconveniences..',
+        'ru': 'Хм.. Извините, но по некой причине сохранить Ваши данные в базу данных не удалось.\nЯ проинформировал своего автора (iurii.dziuban@gmail.com) об этом и надеюсь, что он быстро разберется.\nИзвините за неудобства..',
+        'uk': 'Хм.. Вибачте, але я певної причини зберегти Ваші дані у базі данних не вдалося.\nЯ проінформував свого автора (iurii.dziuban@gmail.com) про це і сподіваюсь, що він швидко розбереться.\nВибачте за незручності..'
     },
     'message44': {
         'en': 'My story',
@@ -334,14 +334,14 @@ L10N = {
     },
     # messages 62-63 - one sentence
     'message62': {
-        'en': 'I came from <a href="',
-        'ru': 'Я начал свой путь из города <a href="',
-        'uk': 'Я почав свій шлях з міста <a href="'
+        'en': 'I came from ',
+        'ru': 'Я начал свой путь из города ',
+        'uk': 'Я почав свій шлях з міста '
     },
     'message63': {
-        'en': '">Cherkasy</a> city, Ukraine, from a family with 3 nice small kids',
-        'ru': '">Черкассы</a>, Украина, из семьи с тремя маленькими забавными детьми',
-        'uk': '">Черкаси</a>, Україна, із сім\'ї з трьома маленькими кумедними дітьми'
+        'en': 'Cherkasy city, Ukraine, from a family with 3 nice small kids',
+        'ru': 'Черкассы, Украина, из семьи с тремя маленькими забавными детьми',
+        'uk': 'Черкаси, Україна, із сім\'ї з трьома маленькими кумедними дітьми'
     },
     'message64': {
         'en': 'So far the map of my journey looks as follows:',
@@ -355,9 +355,9 @@ L10N = {
     },
     # messages 66-67 - one sentence
     'message66': {
-        'en': '<strong>Place #1</strong>\nI started my journey on',
-        'ru': '<strong>Место №1</strong>\nЯ начал свое путешествие',
-        'uk': '<strong>Місце №1</strong>\nЯ почав свою мандрівку'
+        'en': 'Place #1\nI started my journey on',
+        'ru': 'Место №1\nЯ начал свое путешествие',
+        'uk': 'Місце №1\nЯ почав свою мандрівку'
     },
     'message67': {
         'en': 'from',
@@ -437,9 +437,9 @@ L10N = {
         'uk': 'Будь ласка, оберіть мову'
     },
     'message82': {
-        'en': 'Language was changed to <b>English</b>',
-        'ru': 'Язык был изменен на <b>русский</b>',
-        'uk': 'Мову було змінено на <b>українську</b>'
+        'en': 'Language was changed to English',
+        'ru': 'Язык был изменен на русский',
+        'uk': 'Мову було змінено на українську'
     },
     'message83': {
         'en': 'Change language',

@@ -1,3 +1,163 @@
+# -*- coding: utf-8 -*-
+import sys
+sys.path.insert(0, '../ft')
+import facebook
+import requests
+import json
+from keys import DF_TOKEN, GOOGLE_MAPS_API_KEY, MAIL_PWD, FB_ACCESS_TOKEN, FB_VERIFY_TOKEN
+graph = facebook.GraphAPI(access_token=FB_ACCESS_TOKEN, version="2.2")
+
+OURTRAVELLER = 'Teddy'
+PHOTO_DIR = '../ft/static/uploads/{}/'.format(OURTRAVELLER) # where photos from places visited are saved
+SERVICE_IMG_DIR = '../ft/static/uploads/{}/service/'.format(OURTRAVELLER) # where 'general info' images are saved (summary map, secret code example etc)
+
+
+def get_user_first_name(user_id):
+    '''
+        Retrieves user first name using Facebook Graph API for a user with user_id
+    '''
+    user = graph.get_object(id=str(user_id))
+    if user.get('first_name'):
+        return user.get('first_name')
+    else:
+        return False
+
+def send_generic_template_message(user_id, title, subtitle='', image_url='', buttons=[]):
+    '''
+    Sends a generic message (with title, subtitle[optional], image uploaded from url[optional] and up to 3 buttons)
+    to FB user with recipient_id
+    Buttons of 'postback' type, title=payload
+    '''
+    our_buttons = []
+    for button in buttons:
+        our_buttons.append(
+            {
+                'type': 'postback',
+                'title': button['title'],
+                'payload': button['payload']
+            }
+        )
+
+    r = requests.post('https://graph.facebook.com/v2.6/me/messages',
+                        params = {'access_token': FB_ACCESS_TOKEN},
+                        data = json.dumps(
+                            {
+                                'recipient': {'id': user_id},
+                                'message': {
+                                    'attachment': {
+                                        'type': 'template',
+                                        'payload': {
+                                            'template_type': 'generic',
+                                            'elements': [
+                                                {
+                                                    'title': title,
+                                                    'image_url': image_url,
+                                                    'subtitle': subtitle,
+                                                    'buttons': our_buttons
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            }
+                        ),
+                        headers={'Content-type': 'application/json'}
+                      )
+    if r.status_code != requests.codes.ok:
+        print(r.text)
+
+def send_text_message_share_location(user_id, text):
+    '''
+    Sends a text message (text) to FB user with user_id with a quick reply button for sharing location
+    '''
+    r = requests.post('https://graph.facebook.com/v2.6/me/messages',
+                        params = {'access_token': FB_ACCESS_TOKEN},
+                        data = json.dumps(
+                            {
+                                'recipient': {'id': user_id},
+                                'message': {
+                                    'text': text,
+                                'quick_replies': [
+                                    {
+                                        'content_type': 'location'
+                                    }
+                                ]
+                                }
+                            }
+                        ),
+                        headers={'Content-type': 'application/json'}
+                      )
+    if r.status_code != requests.codes.ok:
+        print(r.text)
+
+#send_text_message_share_location('1953498254661052', 'Hello')
+
+def send_text_message(user_id, text):
+    '''
+    Sends a text message (text) to FB user with recipient_id
+    '''
+    r = requests.post('https://graph.facebook.com/v2.6/me/messages',
+                        params = {'access_token': FB_ACCESS_TOKEN},
+                        data = json.dumps(
+                            {
+                                'recipient': {'id': user_id},
+                                'message': {'text': text}
+                            }
+                        ),
+                        headers={'Content-type': 'application/json'}
+                      )
+    if r.status_code != requests.codes.ok:
+        print(r.text)
+
+for index, marker in enumerate(markers):
+    latlongparams += '&markers=color:green%7Clabel:{}%7C{},{}'.format(index + 1, marker['lat'], marker['lng'])
+query = 'https://maps.googleapis.com/maps/api/staticmap?size=700x400&maptype=roadmap{}&key={}'.format(latlongparams, GOOGLE_MAPS_API_KEY)
+
+'https://maps.googleapis.com/maps/api/staticmap?key={}&markers=color:green|{},{}&size=700x400&maptype=roadmap'.format(GOOGLE_MAPS_API_KEY, lat, long)
+
+send_text_message('1953498254661052','https://www.google.com/maps/@49.4444086,32.0469634,15z')
+
+'''
+curl  \
+  -F 'recipient={"id":"1953498254661052"}' \
+  -F 'message={"attachment":{"type":"image", "payload":{"is_reusable"=true}}}' \
+  -F 'filedata=@/vagrant/teddygo/ft/static/uploads/biography.jpg;type=image/jpg' \
+  "https://graph.facebook.com/v2.6/me/messages?access_token=EAADGEqL1NYABADEU1ITeQWyXDAnZBg70dbHZBWvDGSFbSfqDOWIciSD99ya0Gqaa1gksxoZBBbOlQ4J229EEbddFGHZCHlJbhZBe61p3Q3yZCaz5D5Ipr7VWY7pbS3i8OhvobT9vH4Eqa5C771C4fSYKljzSUAAljEBoc2A2lFYAZDZD"
+
+curl -X POST -H "Content-Type: application/json" -d '{
+  "message":{
+    "attachment":{
+      "type":"image",
+      "payload":{
+        "is_reusable": true,
+        "url":"https://fellowtraveler.club/static/uploads/Teddy/service/biography.jpg"
+      }
+    }
+  }
+}' "https://graph.facebook.com/v2.6/me/message_attachments?access_token=EAADGEqL1NYABADEU1ITeQWyXDAnZBg70dbHZBWvDGSFbSfqDOWIciSD99ya0Gqaa1gksxoZBBbOlQ4J229EEbddFGHZCHlJbhZBe61p3Q3yZCaz5D5Ipr7VWY7pbS3i8OhvobT9vH4Eqa5C771C4fSYKljzSUAAljEBoc2A2lFYAZDZD"
+
+"196520410973040"\
+
+curl -X POST -H "Content-Type: application/json" -d '{
+  "recipient":{
+    "id":"<PSID>"
+  },
+  "message":{
+    "attachment": {
+      "type": "template",
+      "payload": {
+         "template_type": "media",
+         "elements": [
+            {
+               "media_type": "<image|video>",
+               "attachment_id": "<ATTACHMENT_ID>"
+            }
+         ]
+      }
+    }
+  }
+}' "https://graph.facebook.com/v2.6/me/messages?access_token=<PAGE_ACCESS_TOKEN>"    
+
 // several images were uploaded
 {
     'entry': [
@@ -154,3 +314,4 @@
           ]
       }
       ]
+'''
