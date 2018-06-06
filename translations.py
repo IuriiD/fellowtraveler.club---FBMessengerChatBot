@@ -427,9 +427,9 @@ L10N = {
         'uk': 'Це було місце №'
     },
     'message80': {
-        'en': 'Here\'s our FAQ',
-        'ru': 'Вот наши ЧаВо',
-        'uk': 'Ось наші ЧаПи'
+        'en': 'Here\'s our FAQ:\n...\n...\n...',
+        'ru': 'Вот наши ЧаВо:\n...\n...\n...',
+        'uk': 'Ось наші ЧаПи:\n...\n...\n...'
     },
     'message81': {
         'en': 'Please select your language',
@@ -526,5 +526,10 @@ L10N = {
         'en': 'Start',
         'ru': 'Начало',
         'uk': 'Початок'
+    },
+    'message100': {
+        'en': 'Is English Ok? You also can switch language in Menu>FAQ/Settings>Change language',
+        'ru': 'На русском Ok? Вы также можете поменять язык в Menu>FAQ/Settings>Change language',
+        'uk': 'Українською Ok? Ви також можете змінити мову у Menu>FAQ/Settings>Change language'
     }
 }

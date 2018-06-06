@@ -4,6 +4,7 @@ sys.path.insert(0, '../ft')
 import facebook
 import requests
 import json
+import ft_functions
 from keys import DF_TOKEN, GOOGLE_MAPS_API_KEY, MAIL_PWD, FB_ACCESS_TOKEN, FB_VERIFY_TOKEN
 graph = facebook.GraphAPI(access_token=FB_ACCESS_TOKEN, version="2.2")
 
@@ -109,15 +110,60 @@ def send_text_message(user_id, text):
     if r.status_code != requests.codes.ok:
         print(r.text)
 
+def save_static_map(traveller):
+    '''
+    https://developers.google.com/maps/documentation/static-maps/intro
+    Requests a list of places visited by traveller from DB and draws a static (png) map
+    '''
+    print('\nsave_static_map()')
+    try:
+        markers = ft_functions.get_location_history(traveller, PHOTO_DIR)['mymarkers'][::-1]
+        latlongparams = ''
+        for index, marker in enumerate(markers):
+            latlongparams += '&markers=color:green%7Clabel:{}%7C{},{}'.format(index + 1, marker['lat'], marker['lng'])
+
+        query = 'https://maps.googleapis.com/maps/api/staticmap?size=700x400&maptype=roadmap{}&key={}'.format(latlongparams, GOOGLE_MAPS_API_KEY)
+        print('query: {}'.format(query))
+
+        path = PHOTO_DIR + traveller + '_summary_map.png'
+
+        r = requests.get(query, timeout=0.5)
+        if r.status_code == 200:
+            with open(path, 'wb') as f:
+                f.write(r.content)
+
+        return True
+    except Exception as e:
+        print('save_static_map() exception: {}'.format(e))
+        return False
+
+user_id = '1953498254661052'
+print(save_static_map('Teddy'))
+
+
+
+
+'''
+lat = '49.4410043'
+long = '32.064902'
+img = 'https://maps.googleapis.com/maps/api/staticmap?key={}&markers=color:green|{},{}&size=700x400&maptype=roadmap'.format(
+            GOOGLE_MAPS_API_KEY, lat, long)
+
+send_generic_template_message(user_id, title='TestTitle', subtitle='Somethinelse', image_url=img, buttons=[
+    {
+        'type': 'postback',
+        'title': 'Btn1',
+        'payload': 'Btn1'
+    }
+])
+
 for index, marker in enumerate(markers):
     latlongparams += '&markers=color:green%7Clabel:{}%7C{},{}'.format(index + 1, marker['lat'], marker['lng'])
 query = 'https://maps.googleapis.com/maps/api/staticmap?size=700x400&maptype=roadmap{}&key={}'.format(latlongparams, GOOGLE_MAPS_API_KEY)
 
-'https://maps.googleapis.com/maps/api/staticmap?key={}&markers=color:green|{},{}&size=700x400&maptype=roadmap'.format(GOOGLE_MAPS_API_KEY, lat, long)
 
 send_text_message('1953498254661052','https://www.google.com/maps/@49.4444086,32.0469634,15z')
 
-'''
 curl  \
   -F 'recipient={"id":"1953498254661052"}' \
   -F 'message={"attachment":{"type":"image", "payload":{"is_reusable"=true}}}' \
@@ -130,7 +176,7 @@ curl -X POST -H "Content-Type: application/json" -d '{
       "type":"image",
       "payload":{
         "is_reusable": true,
-        "url":"https://fellowtraveler.club/static/uploads/Teddy/service/biography.jpg"
+        "url":"https://fellowtraveler.club/static/uploads/Teddy/fellowtravelerclub-Teddy-060518131443213.jpg"
       }
     }
   }

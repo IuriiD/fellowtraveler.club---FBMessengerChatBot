@@ -71,7 +71,9 @@ NEWLOCATION = {    # holds data for traveler's location before storing it to DB
     'country': None,
     'place_id': None,
     'comment': None,
-    'photos': []
+    'photos': [],
+    'photos_FB_ids': [],
+    'photos_TG_ids': []
 }
 
 LANGUAGES = {
@@ -211,12 +213,21 @@ def send_generic_template_message(user_id, title, subtitle='', image_url='', but
     '''
     our_buttons = []
     for button in buttons:
-        our_buttons.append(
-            {
-                'type': 'postback',
-                'title': button['title'],
-                'payload': button['payload']
-            }
+        if 'type' not in button:
+            our_buttons.append(
+                {
+                    'type': 'postback',
+                    'title': button['title'],
+                    'payload': button['payload']
+                }
+            )
+        else:
+            our_buttons.append(
+                {
+                    'type': 'web_url',
+                    'url': button['url'],
+                    'title': button['title']
+                }
         )
 
     r = requests.post('https://graph.facebook.com/v2.6/me/messages',
@@ -251,7 +262,7 @@ def send_generic_template_message(user_id, title, subtitle='', image_url='', but
 def send_button_template_message(user_id, text, buttons=[]):
     '''
     Sends a button template message (text + up to 3 buttons) to FB user with recipient_id
-    Using buttons of 'postback' or URL type
+    Using buttons of 'postback'(by default) or URL type (if 'type': 'url' was indicated)
     '''
     our_buttons = []
     for button in buttons:
@@ -303,11 +314,11 @@ def travelers_story_intro(user_id):
     traveler_photo = SERVICE_IMG_DIR + OURTRAVELLER + '.jpg'
 
     # message57 = 'My name is'
-    message1 = '{} {}'.format(L10N['message57'][USER_LANGUAGE], OURTRAVELLER)
     # message58 = 'I\'m a traveler.\nMy dream is to see the world'
-    message2 = L10N['message58'][USER_LANGUAGE]
+    message1 = '{} {}. {}'.format(L10N['message57'][USER_LANGUAGE], OURTRAVELLER, L10N['message58'][USER_LANGUAGE])
 
-    print('\nSending the 1st message with text {} - {}'.format(message1, message2))
+    # message100 = 'Is English Ok? You also can switch language in Menu>FAQ/Settings>Change language'
+    message2 = L10N['message100'][USER_LANGUAGE]
 
     send_generic_template_message(user_id,
                                     title=message1,
@@ -315,7 +326,6 @@ def travelers_story_intro(user_id):
                                     image_url=traveler_photo,
                                     buttons=[
                                         {
-                                           'type': 'postback',
                                            # message83 = "Change language"
                                            'title': L10N['message83'][USER_LANGUAGE],
                                            'payload': 'CHANGE_LANGUAGE'
@@ -329,17 +339,21 @@ def travelers_story_intro(user_id):
 
     send_button_template_message(user_id, text=message3, buttons=[
         {
-            'type': 'postback',
             # message47 = "Yes"
             'title': L10N['message47'][USER_LANGUAGE],
             'payload': L10N['message47'][USER_LANGUAGE]
         },
         {
-            'type': 'postback',
             # message48 = "No, thanks"
             'title': L10N['message48'][USER_LANGUAGE],
             'payload': L10N['message48'][USER_LANGUAGE]
         },
+        {
+            # message46 = "You got"
+            'title': "{} {}?".format(L10N['message46'][USER_LANGUAGE], OURTRAVELLER),
+            # message85 = "You got fellowtraveler"
+            'payload': L10N['message85'][USER_LANGUAGE]
+        }
     ])
 
 
@@ -410,7 +424,7 @@ def getting_started(user_id):
 
     # Console logging
     print()
-    print('User clicked button "Help/Settings >> Get help" in Persistent menu')
+    print('User clicked button "Start" in Persistent menu')
     print('Contexts at function exit: {}'.format(CONTEXTS))
 
 
@@ -698,6 +712,12 @@ def dialogflow(query, user_id, lang_code='en'):
         'intent': intent,
         'speech': speech
     }
+    print('\nUSER SAID:')
+    print(query)
+    print('DIALOGFLOWs OUTPUT:')
+    print('-- intent: {}'.format(intent))
+    print('-- speech: {}'.format(speech))
+    print('CONTEXTS: {}'.format(CONTEXTS))
     return output
 
 
@@ -748,19 +768,16 @@ def always_triggered(chat_id, intent, speech):
                                       image_url=traveler_photo,
                                       buttons=[
                                           {
-                                              'type': 'postback',
                                               # message47 = "Yes"
                                               'title': L10N['message47'][USER_LANGUAGE],
                                               'payload': L10N['message47'][USER_LANGUAGE]
                                           },
                                           {
-                                              'type': 'postback',
                                               # message48 = "No, thanks"
                                               'title': L10N['message48'][USER_LANGUAGE],
                                               'payload': L10N['message48'][USER_LANGUAGE]
                                           },
                                           {
-                                              'type': 'postback',
                                               # message46 = "You got"
                                               'title': "{} {}?".format(L10N['message46'][USER_LANGUAGE], OURTRAVELLER),
                                               'payload': L10N['message85'][USER_LANGUAGE]
@@ -1012,7 +1029,9 @@ def default_fallback(chat_id, intent, speech):
         location_input_flag = True
     if 'last_input_media' in CONTEXTS:
         last_input_media_flag = True
+
     CONTEXTS.clear()
+
     if code_correct_flag:
         CONTEXTS.append('code_correct')
     if location_input_flag:
@@ -1087,19 +1106,21 @@ def default_fallback(chat_id, intent, speech):
                                      text=message3,
                                      buttons=[
                                          {
-                                             # message52 = "Instructions"
-                                             "title": L10N['message52'][USER_LANGUAGE],
-                                             "payload": L10N['message52'][USER_LANGUAGE]
+                                             # message44 = "My story"
+                                             "title": L10N['message44'][USER_LANGUAGE],
+                                             # message84 = "Tell your story"
+                                             "payload": L10N['message84'][USER_LANGUAGE]
                                          },
                                          {
-                                             # message53 = "Add location"
-                                             "title": L10N['message53'][USER_LANGUAGE],
-                                             "payload": L10N['message53'][USER_LANGUAGE]
+                                             # message45 = "FAQ"
+                                             "title": L10N['message45'][USER_LANGUAGE],
+                                             "payload": L10N['message45'][USER_LANGUAGE]
                                          },
                                          {
-                                             # message51 = "Contact support"
-                                             "title": L10N['message51'][USER_LANGUAGE],
-                                             "payload": L10N['message51'][USER_LANGUAGE]
+                                             # message46 = "You got"
+                                             "title": "{} {}?".format(L10N['message46'][USER_LANGUAGE], OURTRAVELLER),
+                                             # message85 = "You got fellowtraveler"
+                                             "payload": L10N['message85'][USER_LANGUAGE]
                                          }
                                      ]
                                      )
@@ -1116,8 +1137,10 @@ def journey_intro(chat_id, traveller):
     # message61 = 'Ok, here is my story'
     message1 = L10N['message61'][USER_LANGUAGE]
     send_text_message(chat_id, message1)
+
     time.sleep(MEDIUM_TIMEOUT)
-    if save_static_map(OURTRAVELLER):
+
+    if save_static_map(traveller):
         # message62 = 'I came from '
         # message63 = 'Cherkasy city, Ukraine, from a family with 3 nice small kids'
         message2 = '{}{}'.format(L10N['message62'][USER_LANGUAGE], L10N['message63'][USER_LANGUAGE])
@@ -1173,19 +1196,23 @@ def save_static_map(traveller):
     https://developers.google.com/maps/documentation/static-maps/intro
     Requests a list of places visited by traveller from DB and draws a static (png) map
     '''
+    print('\nsave_static_map()')
     try:
         markers = ft_functions.get_location_history(traveller, PHOTO_DIR)['mymarkers'][::-1]
         latlongparams = ''
         for index, marker in enumerate(markers):
             latlongparams += '&markers=color:green%7Clabel:{}%7C{},{}'.format(index + 1, marker['lat'], marker['lng'])
         query = 'https://maps.googleapis.com/maps/api/staticmap?size=700x400&maptype=roadmap{}&key={}'.format(latlongparams, GOOGLE_MAPS_API_KEY)
+        print('query: {}'.format(query))
 
         path = PHOTO_DIR + traveller + '_summary_map.png'
+        print('path: {}'.format(path))
 
         r = requests.get(query, timeout=0.5)
         if r.status_code == 200:
             with open(path, 'wb') as f:
                 f.write(r.content)
+
         return True
     except Exception as e:
         print('save_static_map() exception: {}'.format(e))
@@ -1270,22 +1297,32 @@ def the_1st_place(chat_id, traveller, if_to_continue):
         else:
             # message75 = 'days ago'
             day_or_days = '{} {}'.format(time_passed, L10N['message75'][USER_LANGUAGE])
+
         # message66 = '<strong>Place #1</strong>\nI started my journey on'
         # message67 = 'from'
         message1 = '{} {} ({}) {} \n<i>{}</i>'.format(L10N['message66'][USER_LANGUAGE], start_date, day_or_days, L10N['message67'][USER_LANGUAGE], formatted_address)
         send_text_message(chat_id, message1)
 
-        # Sending location as a static GMap in Generic or Media template
-        'https://maps.googleapis.com/maps/api/staticmap?key={}&markers=color:green|{},{}&size=700x400&maptype=roadmap'.format(
+        # Sending location as a static GMap in generic template (lat/long as title, url button with link to map)
+        message3 = '{}, {}'.format(lat, long)
+        map_image = 'https://maps.googleapis.com/maps/api/staticmap?key={}&markers=color:green|{},{}&size=700x400&maptype=roadmap'.format(
             GOOGLE_MAPS_API_KEY, lat, long)
+        send_generic_template_message(chat_id,title=message3,image_url=map_image, buttons=[
+            {
+                # message65 = 'Open map in browser'
+                'title': L10N['message65'][USER_LANGUAGE],
+                'type': 'web_url',
+                'url': 'https://www.google.com/maps/@{},{},15z'.format(lat, long)
+            }
+        ])
 
-        bot.send_location(chat_id, latitude=lat, longitude=long)
-        photos = the_1st_location['photos']
+        # Sending photos for the place as media templates
+        photos = the_1st_location['photos_FB_ids']
         if len(photos) > 0:
             for photo in photos:
-                #print(photo)
-                every_photo = open(PHOTO_DIR + photo, 'rb')
-                bot.send_photo(chat_id, every_photo)
+                send_media_template_message(chat_id, photo)
+
+        # Sending comment/info about author
         author = the_1st_location['author']
         comment = the_1st_location['comment']
         # message68 = 'That was the 1st place'
@@ -1295,22 +1332,267 @@ def the_1st_place(chat_id, traveller, if_to_continue):
                 # message69 = '(who decided to remain anonymous)'
                 author = L10N['message69'][USER_LANGUAGE]
             else:
-                author = '<b>{}</b>'.format(author)
+                author = '{}'.format(author)
             # message70 = 'My new friend'
             # message71 = 'wrote:'
-            message2 = '{} {} {}\n<i>{}</i>'.format(L10N['message70'][USER_LANGUAGE], author, L10N['message71'][USER_LANGUAGE], comment)
+            message2 = '{} {} {}\n{}'.format(L10N['message70'][USER_LANGUAGE], author, L10N['message71'][USER_LANGUAGE], comment)
         else:
             if author != 'Anonymous':
                 # message72 = 'I got acquainted with a new friend - '
-                message2 = '{} <b>{}</b> :)'.format(L10N['message72'][USER_LANGUAGE], author)
+                message2 = '{} {} :)'.format(L10N['message72'][USER_LANGUAGE], author)
+
         if if_to_continue:
-            bot.send_message(chat_id, message2, parse_mode='html', reply_markup=next_or_help_menu_kb(USER_LANGUAGE))
-            #print('Here')
+            send_button_template_message(chat_id, text=message2, buttons=[
+            {
+                # message49 = "Next"
+                "title": L10N['message49'][USER_LANGUAGE],
+                "payload": L10N['message49'][USER_LANGUAGE]
+            },
+            {
+                # message45 = "FAQ"
+                "title": L10N['message45'][USER_LANGUAGE],
+                "payload": L10N['message45'][USER_LANGUAGE]
+            }
+            ])
         else:
-            bot.send_message(chat_id, message2, parse_mode='html')
-            #print('There')
+            send_text_message(chat_id, message2)
     else:
         pass
+
+
+def time_from_location(from_date):
+    '''
+        Function calculates time elapsed from the date when traveler was in specific location (from_date) to now
+    '''
+    current_datetime = datetime.now(timezone.utc)
+    difference = (current_datetime - from_date).days
+    return difference
+
+
+def every_place(chat_id, traveller, location_to_show, if_to_continue):
+    '''
+        Block 4
+        Shows the 2nd and further visited places
+    '''
+    client = MongoClient()
+    db = client.TeddyGo
+
+    # Message: I started my journey in ... on ...
+    location = db[traveller].find()[location_to_show]
+
+    formatted_address = location['formatted_address']
+    lat = location['latitude']
+    long = location['longitude']
+    location_date = '{}'.format(location['_id'].generation_time.date())
+    location_date_service = location['_id'].generation_time
+    time_passed = time_from_location(location_date_service)
+    if time_passed == 0:
+        # message73 = 'today'
+        day_or_days = L10N['message73'][USER_LANGUAGE]
+    elif time_passed == 1:
+        # message74 = '1 day ago'
+        day_or_days = L10N['message74'][USER_LANGUAGE]
+    else:
+        # message75 = 'days ago'
+        day_or_days = '{} {}'.format(time_passed, L10N['message75'][USER_LANGUAGE])
+    # message76 = 'Place #'
+    # message77 = '\nOn'
+    # message78 = 'I was in'
+    message1 = '{}{} {} {} ({}) {} \n{}'.format(L10N['message76'][USER_LANGUAGE], location_to_show + 1, L10N['message77'][USER_LANGUAGE],
+                                                                                             location_date, day_or_days, L10N['message78'][USER_LANGUAGE],
+                                                                                             formatted_address)
+    send_text_message(chat_id, message1)
+
+    # Sending location as a static GMap in generic template (lat/long as title, url button with link to map)
+    message3 = '{}, {}'.format(lat, long)
+    map_image = 'https://maps.googleapis.com/maps/api/staticmap?key={}&markers=color:green|{},{}&size=700x400&maptype=roadmap'.format(
+        GOOGLE_MAPS_API_KEY, lat, long)
+    send_generic_template_message(chat_id, title=message3, image_url=map_image, buttons=[
+        {
+            # message65 = 'Open map in browser'
+            'title': L10N['message65'][USER_LANGUAGE],
+            'type': 'web_url',
+            'url': 'https://www.google.com/maps/@{},{},15z'.format(lat, long)
+        }
+    ])
+
+    # Sending photos for the place as media templates
+    photos = location['photos_FB_ids']
+    if len(photos) > 0:
+        for photo in photos:
+            send_media_template_message(chat_id, photo)
+
+    # Sending comment/info about author
+    author = location['author']
+    comment = location['comment']
+    # message79 = 'That was the place #'
+    message2 = '{}{}'.format(L10N['message79'][USER_LANGUAGE], location_to_show + 1)
+    if comment != '':
+        if author == 'Anonymous':
+            # message69 = '(who decided to remain anonymous)'
+            author = L10N['message69'][USER_LANGUAGE]
+        else:
+            author = '{}'.format(author)
+
+        # message70 = 'My new friend'
+        # message71 = 'wrote:'
+        message2 = '{} {} {}\n{}'.format(L10N['message70'][USER_LANGUAGE], author, L10N['message71'][USER_LANGUAGE], comment)
+    else:
+        '''
+        if author != 'Anonymous':
+            # message72 = 'I got acquainted with a new friend - '
+            message2 = '{}{} :)'.format(L10N['message72'][USER_LANGUAGE], author)
+        '''
+        pass
+
+    if if_to_continue:
+        send_button_template_message(chat_id, text=message2, buttons=[
+        {
+            # message49 = "Next"
+            "title": L10N['message49'][USER_LANGUAGE],
+            "payload": L10N['message49'][USER_LANGUAGE]
+        },
+        {
+            # message45 = "FAQ"
+            "title": L10N['message45'][USER_LANGUAGE],
+            "payload": L10N['message45'][USER_LANGUAGE]
+        }
+        ])
+    else:
+        send_text_message(chat_id, message2)
+
+
+def secret_code_validation(secret_code_entered):
+    '''
+        Validates the secret code entered by user against the one in DB
+        If code valid - updates contexts (remove 'enters_code', append 'code_correct')
+        If code invalid - suggests to enter it again + inline button 'Cancel' (to remove context 'enters_code')
+    '''
+    client = MongoClient()
+    db = client.TeddyGo
+    collection_travellers = db.travellers
+    teddys_sc_should_be = collection_travellers.find_one({"name": OURTRAVELLER})['secret_code']
+    if not sha256_crypt.verify(secret_code_entered, teddys_sc_should_be):
+        return False
+    else:
+        return True
+
+
+def gmaps_geocoder(lat, lng):
+    '''
+    Google Maps - reverse geocoding (https://developers.google.com/maps/documentation/geocoding/start#reverse)
+    Getting geodata (namely 'formatted_address', 'locality', 'administrative_area_level_1', 'country' and 'place_id')
+    for coordinates received after location sharing in Telegram
+    '''
+    global NEWLOCATION
+
+    URL = 'https://maps.googleapis.com/maps/api/geocode/json?latlng={},{}&key={}'.format(lat, lng, GOOGLE_MAPS_API_KEY)
+    try:
+        r = requests.get(URL).json().get('results')
+
+        if r[0]:
+            formatted_address = r[0].get('formatted_address')
+            address_components = r[0].get('address_components')
+            locality, administrative_area_level_1, country, place_id = None, None, None, None
+            for address_component in address_components:
+                types = address_component.get('types')
+                short_name = address_component.get('short_name')
+                # print("type: {}, short name: {}".format(types, short_name))
+                if 'locality' in types:
+                    locality = short_name
+                elif 'administrative_area_level_1' in types:
+                    administrative_area_level_1 = short_name
+                elif 'country' in types:
+                    country = short_name
+            place_id = r[0].get('place_id')
+
+            NEWLOCATION['formatted_address'] = formatted_address
+            NEWLOCATION['locality'] = locality
+            NEWLOCATION['administrative_area_level_1'] = administrative_area_level_1
+            NEWLOCATION['country'] = country
+            NEWLOCATION['place_id'] = place_id
+
+        return True
+    except Exception as e:
+        print('gmaps_geocoder() exception: {}'.format(e))
+        #send_email('Logger', 'gmaps_geocoder() exception: {}'.format(e))
+        return False
+
+
+def new_location_summary(chat_id, from_user):
+    '''
+        Functions sums up data on new location (held in NEWLOCATION variable) before saving the new location to DB
+    '''
+    try:
+        location_date = datetime.now().strftime('%Y-%m-%d')
+        message1 = 'On {} I ({}) was in \n{}'.format(location_date, OURTRAVELLER, NEWLOCATION['formatted_address'])
+        send_text_message(chat_id, message1)
+
+        # Sending location as a static GMap in generic template (lat/long as title, url button with link to map)
+        lat = NEWLOCATION['latitude']
+        long = NEWLOCATION['longitude']
+        message3 = '{}, {}'.format(lat, long)
+        map_image = 'https://maps.googleapis.com/maps/api/staticmap?key={}&markers=color:green|{},{}&size=700x400&maptype=roadmap'.format(
+            GOOGLE_MAPS_API_KEY, lat, long)
+        send_generic_template_message(chat_id,title=message3,image_url=map_image, buttons=[
+            {
+                # message65 = 'Open map in browser'
+                'title': L10N['message65'][USER_LANGUAGE],
+                'type': 'web_url',
+                'url': 'https://www.google.com/maps/@{},{},15z'.format(lat, long)
+            }
+        ])
+
+        # Sending photos for the place as media templates
+        photos = NEWLOCATION['photos_FB_ids']
+        if len(photos) > 0:
+            for photo in photos:
+                send_media_template_message(chat_id, photo)
+
+        author = '{}'.format(from_user.first_name)
+        comment = NEWLOCATION['comment']
+        if comment != '':
+            # message70 = 'My new friend'
+            # message71 = 'wrote:'
+            message2 = '{} {} {}\n{}'.format(L10N['message70'][USER_LANGUAGE], author,
+                                                    L10N['message71'][USER_LANGUAGE], comment)
+        else:
+            # message72 = 'I got acquainted with a new friend - '
+            message2 = '{}<b>{}</b> :)'.format(L10N['message72'][USER_LANGUAGE], author)
+        send_text_message(chat_id, message2)
+        return True
+    except Exception as e:
+        print('new_location_summary() exception: {}'.format(e))
+        return False
+
+
+def submit_new_location(traveller):
+    '''
+        Saves new location (NEWLOCATION) to DB
+        Updates journey summary
+    '''
+    global NEWLOCATION
+    try:
+        # Logging
+        print('')
+        print('Saving location to DB...')
+        #print('NEWLOCATION: {}'.format(NEWLOCATION))
+
+        client = MongoClient()
+        db = client.TeddyGo
+        collection_teddy = db[traveller]
+        NEWLOCATION.pop('_id', None)
+        collection_teddy.insert_one(NEWLOCATION)
+
+        # Update journey summary
+        ft_functions.summarize_journey(OURTRAVELLER)
+
+        print('Done')
+        return True
+    except Exception as e:
+        print('submit_new_location() exception: {}'.format(e))
+        #send_email('Logger', 'gmaps_geocoder() exception: {}'.format(e))
+        return False
 
 
 def main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=None, media=False, other_input=False):
@@ -1327,6 +1609,8 @@ def main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=No
     '''
     global CONTEXTS
     global NEWLOCATION
+
+    print('\nCONTEXTS: {}\n'.format(CONTEXTS))
 
     if geodata:
         # message2 = 'Nice place ;)'
@@ -1466,7 +1750,7 @@ def main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=No
                     #1982
 
     # Block 1. Traveler's story
-    # Block 1-1. Reply to typing/clocking_buttons 'Yes'/'No' displayed after the intro block asking
+    # Block 1-1. Reply to typing/clicking_buttons 'Yes'/'No' displayed after the intro block asking
     # if user want's to know more about T. journey
     # On exit of block if user enters 'Yes' - context 'journey_next_info', if 'No' or he/she clicks buttons of
     # previous blocks - contexts[] is cleared
@@ -1548,16 +1832,44 @@ def main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=No
             elif total_locations == 1:
                 the_1st_place(chat_id, OURTRAVELLER, False)
                 # message15 = 'And that\'s all my journey so far ;)\n\nWhat would you like to do next? We can just talk or use this menu:'
-                bot.send_message(chat_id,
-                                 L10N['message15'][USER_LANGUAGE],
-                                 reply_markup=intro_menu_kb(USER_LANGUAGE))
+                message = L10N['message15'][USER_LANGUAGE]
+                send_button_template_message(chat_id, text=message, buttons=[
+                    {
+                        # message44 = "My story"
+                        "title": L10N['message44'][USER_LANGUAGE],
+                        # message84 = "Tell your story"
+                        "payload": L10N['message84'][USER_LANGUAGE]
+                    },
+                    {
+                        # message45 = "FAQ"
+                        "title": L10N['message45'][USER_LANGUAGE],
+                        "payload": L10N['message45'][USER_LANGUAGE]
+                    },
+                    {
+                        # message46 = "You got"
+                        "title": "{} {}?".format(L10N['message46'][USER_LANGUAGE], OURTRAVELLER),
+                        # message85 = "You got fellowtraveler"
+                        "payload": L10N['message85'][USER_LANGUAGE]
+                    }
+                ])
                 if 'journey_next_info' in CONTEXTS:
                     CONTEXTS.remove('journey_next_info')
             # If there are >1 visited places, ask user if he wants to see them ("Yes/No/Help")
             else:
                 # message16 = 'Would you like to see all places that I have been to?'
-                bot.send_message(chat_id, L10N['message16'][USER_LANGUAGE],
-                                 reply_markup=yes_no_help_menu_kb(USER_LANGUAGE))
+                message = L10N['message16'][USER_LANGUAGE]
+                send_button_template_message(chat_id, text=message, buttons=[
+                    {
+                        # message47 = "Yes"
+                        'title': L10N['message47'][USER_LANGUAGE],
+                        'payload': L10N['message47'][USER_LANGUAGE]
+                    },
+                    {
+                        # message48 = "No, thanks"
+                        'title': L10N['message48'][USER_LANGUAGE],
+                        'payload': L10N['message48'][USER_LANGUAGE]
+                    }
+                ])
                 if 'journey_next_info' in CONTEXTS:
                     CONTEXTS.remove('journey_next_info')
                 CONTEXTS.append('journey_summary_presented')
@@ -1593,8 +1905,27 @@ def main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=No
             if 'journey_summary_presented' in CONTEXTS:
                 CONTEXTS.remove('journey_summary_presented')
             # message13 = 'Ok. Than we can just talk ;)\nJust in case here\'s my menu'
-            bot.send_message(chat_id, L10N['message13'][USER_LANGUAGE],
-                             reply_markup=intro_menu_kb(USER_LANGUAGE))
+            message = L10N['message13'][USER_LANGUAGE]
+            send_button_template_message(chat_id, text=message, buttons=[
+                {
+                    # message44 = "My story"
+                    "title": L10N['message44'][USER_LANGUAGE],
+                    # message84 = "Tell your story"
+                    "payload": L10N['message84'][USER_LANGUAGE]
+                },
+                {
+                    # message45 = "FAQ"
+                    "title": L10N['message45'][USER_LANGUAGE],
+                    "payload": L10N['message45'][USER_LANGUAGE]
+                },
+                {
+                    # message46 = "You got"
+                    "title": "{} {}?".format(L10N['message46'][USER_LANGUAGE], OURTRAVELLER),
+                    # message85 = "You got fellowtraveler"
+                    "payload": L10N['message85'][USER_LANGUAGE]
+                }
+            ])
+
         elif intent == 'show_faq':
             if 'journey_summary_presented' in CONTEXTS:
                 CONTEXTS.remove('journey_summary_presented')
@@ -1628,9 +1959,25 @@ def main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=No
                     CONTEXTS.remove('locations_iteration')
                 every_place(chat_id, OURTRAVELLER, location_shown + 1, False)
                 # message15 = 'And that\'s all my journey so far ;)\n\nWhat would you like to do next? We can just talk or use this menu:'
-                bot.send_message(chat_id,
-                                 L10N['message15'][USER_LANGUAGE],
-                                 reply_markup=intro_menu_kb(USER_LANGUAGE))
+                send_button_template_message(chat_id, text=L10N['message15'][USER_LANGUAGE], buttons=[
+                    {
+                        # message44 = "My story"
+                        "title": L10N['message44'][USER_LANGUAGE],
+                        # message84 = "Tell your story"
+                        "payload": L10N['message84'][USER_LANGUAGE]
+                    },
+                    {
+                        # message45 = "FAQ"
+                        "title": L10N['message45'][USER_LANGUAGE],
+                        "payload": L10N['message45'][USER_LANGUAGE]
+                    },
+                    {
+                        # message46 = "You got"
+                        "title": "{} {}?".format(L10N['message46'][USER_LANGUAGE], OURTRAVELLER),
+                        # message85 = "You got fellowtraveler"
+                        "payload": L10N['message85'][USER_LANGUAGE]
+                    }
+                ])
             elif total_locations - (location_shown + 1) > 1:
                 every_place(chat_id, OURTRAVELLER, location_shown + 1, True)
                 for context in CONTEXTS:
@@ -1655,15 +2002,50 @@ def main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=No
             if 'enters_code' in CONTEXTS:
                 CONTEXTS.remove('enters_code')
             # message6, message8 = 'Ok. What would you like to do next?'
-            bot.send_message(chat_id, '{}. {}'.format(L10N['message6'][USER_LANGUAGE], L10N['message8'][USER_LANGUAGE]),
-                         reply_markup=intro_menu_kb(USER_LANGUAGE))
+            message = '{}. {}'.format(L10N['message6'][USER_LANGUAGE], L10N['message8'][USER_LANGUAGE])
+            send_button_template_message(chat_id, text=message, buttons=[
+                {
+                    # message44 = "My story"
+                    "title": L10N['message44'][USER_LANGUAGE],
+                    # message84 = "Tell your story"
+                    "payload": L10N['message84'][USER_LANGUAGE]
+                },
+                {
+                    # message45 = "FAQ"
+                    "title": L10N['message45'][USER_LANGUAGE],
+                    "payload": L10N['message45'][USER_LANGUAGE]
+                },
+                {
+                    # message46 = "You got"
+                    "title": "{} {}?".format(L10N['message46'][USER_LANGUAGE], OURTRAVELLER),
+                    # message85 = "You got fellowtraveler"
+                    "payload": L10N['message85'][USER_LANGUAGE]
+                }
+            ])
         elif intent == 'contact_support':
             if 'enters_code' in CONTEXTS:
                 CONTEXTS.remove('enters_code')
             CONTEXTS.append('contact_support')
             # message17 = 'Any problems, questions, suggestions, remarks, proposals etc? Please enter them below or write to my author\'s email <b>iurii.dziuban@gmail.com</b>\n\n You may also consider visiting <a href="https://iuriid.github.io">iuriid.github.io</a>.'
-            bot.send_message(chat_id, L10N['message17'][USER_LANGUAGE],
-                         parse_mode='html', reply_markup=cancel_help_contacts_menu_kb(USER_LANGUAGE))
+            message = L10N['message17'][USER_LANGUAGE]
+            send_button_template_message(chat_id, text=message,  buttons=[
+                                              {
+                                                  # message50 = "Cancel"
+                                                  "title": L10N['message50'][USER_LANGUAGE],
+                                                  "payload": L10N['message50'][USER_LANGUAGE]
+                                              },
+                                              {
+                                                  # message45 = "FAQ"
+                                                  "title": L10N['message45'][USER_LANGUAGE],
+                                                  "payload": L10N['message45'][USER_LANGUAGE]
+                                              },
+                                              {
+                                                  # message51 = "Contact support"
+                                                  "title": L10N['message51'][USER_LANGUAGE],
+                                                  "payload": L10N['message51'][USER_LANGUAGE]
+                                              }
+                                          ])
+
         # If user enters whatever else, not == intent 'smalltalk.confirmation.cancel'
         else:
             if not is_btn_click:
@@ -1673,7 +2055,8 @@ def main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=No
                         CONTEXTS.remove('enters_code')
                     CONTEXTS.append('code_correct')
                     # message18 = 'Code correct, thanks! Sorry for formalities'
-                    bot.send_message(chat_id, L10N['message18'][USER_LANGUAGE])
+                    send_text_message(chat_id, L10N['message18'][USER_LANGUAGE])
+
                     ''' message19 =  As I might have said, my goal is to see the world.'
                                      '\n\n And as your fellow traveler I will kindly ask you for 2 things:'
                                      '\n- Please show me some nice places of your city/country or please take me with you if you are traveling somewhere. '
@@ -1682,12 +2065,44 @@ def main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=No
                                      '\n\n For more detailed instructions - please click "<b>Instructions</b>"'
                                      '\n\nIf you\'ve got some problems, you can also write to my author (button "<b>Contact support</b>")
                     '''
-                    bot.send_message(chat_id, L10N['message19'][USER_LANGUAGE],
-                                     parse_mode='html', reply_markup=you_got_teddy_menu_kb(USER_LANGUAGE))
+                    send_button_template_message(chat_id, text=L10N['message19'][USER_LANGUAGE], buttons=[
+                        {
+                            # message52 = "Instructions"
+                            "title": L10N['message52'][USER_LANGUAGE],
+                            "payload": L10N['message52'][USER_LANGUAGE]
+                        },
+                        {
+                            # message53 = "Add location"
+                            "title": L10N['message53'][USER_LANGUAGE],
+                            "payload": L10N['message53'][USER_LANGUAGE]
+                        },
+                        {
+                            # message51 = "Contact support"
+                            "title": L10N['message51'][USER_LANGUAGE],
+                            "payload": L10N['message51'][USER_LANGUAGE]
+                        }
+                    ])
+
                 else:
                     # message20 = 'Incorrect secret code. Please try again'
-                    bot.send_message(chat_id, L10N['message20'][USER_LANGUAGE],
-                                     reply_markup=cancel_help_contacts_menu_kb(USER_LANGUAGE))
+                    send_button_template_message(chat_id, text=L10N['message20'][USER_LANGUAGE], buttons=[
+                        {
+                            # message50 = "Cancel"
+                            "title": L10N['message50'][USER_LANGUAGE],
+                            "payload": L10N['message50'][USER_LANGUAGE]
+                        },
+                        {
+                            # message45 = "FAQ"
+                            "title": L10N['message45'][USER_LANGUAGE],
+                            "payload": L10N['message45'][USER_LANGUAGE]
+                        },
+                        {
+                            # message51 = "Contact support"
+                            "title": L10N['message51'][USER_LANGUAGE],
+                            "payload": L10N['message51'][USER_LANGUAGE]
+                        }
+                    ])
+
             else:
                 # Buttons | You got Teddy? | Teddy's story | Help | are activated irrespective of context
                 if not always_triggered(chat_id, intent, speech):
@@ -1703,19 +2118,52 @@ def main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=No
             CONTEXTS.append('code_correct')
             CONTEXTS.append('contact_support')
             # message17 = 'Any problems, questions, suggestions, remarks, proposals etc? Please enter them below or write to my author\'s email <b>iurii.dziuban@gmail.com</b>\n\n You may also consider visiting <a href="https://iuriid.github.io">iuriid.github.io</a>.'
-            bot.send_message(chat_id, L10N['message17'][USER_LANGUAGE],
-                         parse_mode='html', reply_markup=cancel_help_contacts_menu_kb(USER_LANGUAGE))
+            message = L10N['message17'][USER_LANGUAGE]
+            send_button_template_message(chat_id, text=message,  buttons=[
+                                              {
+                                                  # message50 = "Cancel"
+                                                  "title": L10N['message50'][USER_LANGUAGE],
+                                                  "payload": L10N['message50'][USER_LANGUAGE]
+                                              },
+                                              {
+                                                  # message45 = "FAQ"
+                                                  "title": L10N['message45'][USER_LANGUAGE],
+                                                  "payload": L10N['message45'][USER_LANGUAGE]
+                                              },
+                                              {
+                                                  # message51 = "Contact support"
+                                                  "title": L10N['message51'][USER_LANGUAGE],
+                                                  "payload": L10N['message51'][USER_LANGUAGE]
+                                              }
+                                          ])
         elif intent == 'show_instructions':
             CONTEXTS.clear()
             CONTEXTS.append('code_correct')
             # message21 = 'Here are our detailed instructions for those who got'
-            bot.send_message(chat_id, '{} {}'.format(L10N['message21'][USER_LANGUAGE], OURTRAVELLER),
-                             parse_mode='html', reply_markup=you_got_teddy_menu_kb(USER_LANGUAGE))
+            send_button_template_message(chat_id, text=L10N['message21'][USER_LANGUAGE], buttons=[
+                {
+                    # message52 = "Instructions"
+                    "title": L10N['message52'][USER_LANGUAGE],
+                    "payload": L10N['message52'][USER_LANGUAGE]
+                },
+                {
+                    # message53 = "Add location"
+                    "title": L10N['message53'][USER_LANGUAGE],
+                    "payload": L10N['message53'][USER_LANGUAGE]
+                },
+                {
+                    # message51 = "Contact support"
+                    "title": L10N['message51'][USER_LANGUAGE],
+                    "payload": L10N['message51'][USER_LANGUAGE]
+                }
+            ])
+
         elif intent == 'add_location':
             # message22 = 'First please tell <i>where</i>'
             # message23 = '<i>is now</i> (you may use the button \"<b>Share your location</b>\" below) \n\nor \n\n<i>where he was</i> photographed (to enter address which differs from your current location please <b>attach >> Location</b> and drag the map to desired place)'
-            bot.send_message(chat_id, '{} {} {}'.format(L10N['message22'][USER_LANGUAGE], OURTRAVELLER, L10N['message23'][USER_LANGUAGE]),
-                             parse_mode='html', reply_markup=share_location_kb(USER_LANGUAGE))
+            message = '{} {} {}'.format(L10N['message22'][USER_LANGUAGE], OURTRAVELLER, L10N['message23'][USER_LANGUAGE])
+            send_text_message_share_location(chat_id, message)
+
             if 'location_input' not in CONTEXTS:
                 CONTEXTS.append('location_input')
         else:
@@ -1748,32 +2196,87 @@ def main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=No
                     # message24 = 'Thanks! Now could you please upload some photos with'
                     # message25 = 'from this place?\nSelfies with'
                     # message26 = 'are also welcome ;)'
-                    bot.send_message(chat_id,
-                                     '{0} {1} {2} {1} {3}'.format(L10N['message24'][USER_LANGUAGE], OURTRAVELLER, L10N['message25'][USER_LANGUAGE], L10N['message26'][USER_LANGUAGE]), parse_mode='html',
-                                     reply_markup=next_reset_instructions_menu_kb(USER_LANGUAGE))
+                    message = '{0} {1} {2} {1} {3}'.format(L10N['message24'][USER_LANGUAGE], OURTRAVELLER, L10N['message25'][USER_LANGUAGE], L10N['message26'][USER_LANGUAGE])
+                    send_button_template_message(chat_id, text=message, buttons=[
+                        {
+                            # message49 = "Next"
+                            "title": L10N['message49'][USER_LANGUAGE],
+                            "payload": L10N['message49'][USER_LANGUAGE]
+                        },
+                        {
+                            # message55 = "Reset"
+                            "title": L10N['message55'][USER_LANGUAGE],
+                            "payload": L10N['message55'][USER_LANGUAGE]
+                        },
+                        {
+                            # message52 = "Instructions"
+                            "title": L10N['message52'][USER_LANGUAGE],
+                            "payload": L10N['message52'][USER_LANGUAGE]
+                        }
+                    ])
 
                 # User cancels location entry - leave 'code_correct' context, remove 'location_input'
                 elif intent == 'smalltalk.confirmation.cancel':
                     CONTEXTS.remove('location_input')
+
                     # message6, message8 = 'Ok. What would you like to do next?'
-                    bot.send_message(chat_id,
-                                     '{}. {}'.format(L10N['message6'][USER_LANGUAGE], L10N['message8'][USER_LANGUAGE]),
-                                     parse_mode='html', reply_markup=you_got_teddy_menu_kb(USER_LANGUAGE))
+                    message = '{}. {}'.format(L10N['message6'][USER_LANGUAGE], L10N['message8'][USER_LANGUAGE])
+                    send_button_template_message(chat_id, text=message, buttons=[
+                        {
+                            # message52 = "Instructions"
+                            "title": L10N['message52'][USER_LANGUAGE],
+                            "payload": L10N['message52'][USER_LANGUAGE]
+                        },
+                        {
+                            # message53 = "Add location"
+                            "title": L10N['message53'][USER_LANGUAGE],
+                            "payload": L10N['message53'][USER_LANGUAGE]
+                        },
+                        {
+                            # message51 = "Contact support"
+                            "title": L10N['message51'][USER_LANGUAGE],
+                            "payload": L10N['message51'][USER_LANGUAGE]
+                        }
+                    ])
 
                 # User wants detailed instructions - contexts unchanged
                 elif intent == 'show_instructions':
                     # message21 = 'Here are the detailed instructions for those who got'
-                    bot.send_message(chat_id,
-                                     '{} {}'.format(L10N['message6'][USER_LANGUAGE], OURTRAVELLER),
-                                     parse_mode='html', reply_markup=you_got_teddy_menu_kb(USER_LANGUAGE))
+                    message = '{} {}'.format(L10N['message6'][USER_LANGUAGE], OURTRAVELLER)
+                    send_button_template_message(chat_id, text=message, buttons=[
+                        {
+                            # message52 = "Instructions"
+                            "title": L10N['message52'][USER_LANGUAGE],
+                            "payload": L10N['message52'][USER_LANGUAGE]
+                        },
+                        {
+                            # message53 = "Add location"
+                            "title": L10N['message53'][USER_LANGUAGE],
+                            "payload": L10N['message53'][USER_LANGUAGE]
+                        },
+                        {
+                            # message51 = "Contact support"
+                            "title": L10N['message51'][USER_LANGUAGE],
+                            "payload": L10N['message51'][USER_LANGUAGE]
+                        }
+                    ])
 
                 # User should be entering location but he/she types smth or clicks other buttons besides 'Cancel' or
                 # 'Instructions'
                 else:
                     # message27 = 'That doesn\'t look like a valid location. Please try once again'
-                    bot.send_message(chat_id,
-                                     L10N['message27'][USER_LANGUAGE],
-                                     parse_mode='html', reply_markup=cancel_or_instructions_menu_kb(USER_LANGUAGE))
+                    send_button_template_message(chat_id, text=L10N['message27'][USER_LANGUAGE], buttons=[
+                        {
+                            # message50 = "Cancel"
+                            "title": L10N['message50'][USER_LANGUAGE],
+                            "payload": L10N['message50'][USER_LANGUAGE]
+                        },
+                        {
+                            # message52 = "Instructions"
+                            "title": L10N['message52'][USER_LANGUAGE],
+                            "payload": L10N['message52'][USER_LANGUAGE]
+                        }
+                    ])
 
             # Block 2-4. User should be uploading a/some photo/-s.
             elif 'media_input' in CONTEXTS:
@@ -1787,9 +2290,24 @@ def main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=No
                         # message29 = 'Any comments (how did you get'
                         # message30 = ', what did you feel, any messages for future'
                         # message31 = '\'s fellow travelers)?'
-                        bot.send_message(chat_id,
-                                         '{0}\n{1} {2}{3} {2}{4}'.format(L10N['message28'][USER_LANGUAGE], L10N['message29'][USER_LANGUAGE], OURTRAVELLER, L10N['message30'][USER_LANGUAGE], L10N['message31'][USER_LANGUAGE]),
-                                         parse_mode='html', reply_markup=next_reset_instructions_menu_kb(USER_LANGUAGE))
+                        message = '{0}\n{1} {2}{3} {2}{4}'.format(L10N['message28'][USER_LANGUAGE], L10N['message29'][USER_LANGUAGE], OURTRAVELLER, L10N['message30'][USER_LANGUAGE], L10N['message31'][USER_LANGUAGE])
+                        send_button_template_message(chat_id, text=message, buttons=[
+                            {
+                                # message49 = "Next"
+                                "title": L10N['message49'][USER_LANGUAGE],
+                                "payload": L10N['message49'][USER_LANGUAGE]
+                            },
+                            {
+                                # message55 = "Reset"
+                                "title": L10N['message55'][USER_LANGUAGE],
+                                "payload": L10N['message55'][USER_LANGUAGE]
+                            },
+                            {
+                                # message52 = "Instructions"
+                                "title": L10N['message52'][USER_LANGUAGE],
+                                "payload": L10N['message52'][USER_LANGUAGE]
+                            }
+                        ])
 
                 # User refused to upload photos, clicked 'Next' - ask him/her for a comment
                 elif intent == 'next_info':
@@ -1800,19 +2318,48 @@ def main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=No
                     # message29 = 'Any comments (how did you get'
                     # message30 = ', what did you feel, any messages for future'
                     # message31 = '\'s fellow travelers)?'
-                    bot.send_message(chat_id,
-                                     '{0}\n{1} {2}{3} {2}{4}'.format(
-                                         L10N['message6'][USER_LANGUAGE],  L10N['message29'][USER_LANGUAGE], OURTRAVELLER, L10N['message30'][USER_LANGUAGE], L10N['message31'][USER_LANGUAGE]),
-                                     parse_mode='html', reply_markup=next_reset_instructions_menu_kb(USER_LANGUAGE))
+                    message = '{0}\n{1} {2}{3} {2}{4}'.format(
+                                         L10N['message6'][USER_LANGUAGE],  L10N['message29'][USER_LANGUAGE], OURTRAVELLER, L10N['message30'][USER_LANGUAGE], L10N['message31'][USER_LANGUAGE])
+                    send_button_template_message(chat_id, text=message, buttons=[
+                        {
+                            # message49 = "Next"
+                            "title": L10N['message49'][USER_LANGUAGE],
+                            "payload": L10N['message49'][USER_LANGUAGE]
+                        },
+                        {
+                            # message55 = "Reset"
+                            "title": L10N['message55'][USER_LANGUAGE],
+                            "payload": L10N['message55'][USER_LANGUAGE]
+                        },
+                        {
+                            # message52 = "Instructions"
+                            "title": L10N['message52'][USER_LANGUAGE],
+                            "payload": L10N['message52'][USER_LANGUAGE]
+                        }
+                    ])
 
                 # User resets location entry
                 elif intent == 'reset':
                     CONTEXTS.clear()
                     CONTEXTS.append('code_correct')
                     # message32 = 'Ok, let\'s try once again'
-                    bot.send_message(chat_id,
-                                     L10N['message32'][USER_LANGUAGE],
-                                     parse_mode='html', reply_markup=you_got_teddy_menu_kb(USER_LANGUAGE))
+                    send_button_template_message(chat_id, text=L10N['message32'][USER_LANGUAGE], buttons=[
+                        {
+                            # message52 = "Instructions"
+                            "title": L10N['message52'][USER_LANGUAGE],
+                            "payload": L10N['message52'][USER_LANGUAGE]
+                        },
+                        {
+                            # message53 = "Add location"
+                            "title": L10N['message53'][USER_LANGUAGE],
+                            "payload": L10N['message53'][USER_LANGUAGE]
+                        },
+                        {
+                            # message51 = "Contact support"
+                            "title": L10N['message51'][USER_LANGUAGE],
+                            "payload": L10N['message51'][USER_LANGUAGE]
+                        }
+                    ])
 
                 else:
                     # User should be uploading photos but he/she didn't and also didn't click 'Cancel' but
@@ -1837,25 +2384,65 @@ def main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=No
                         # Resume up user's input (location, photos, comment) and ask to confirm or reset
                         time.sleep(SHORT_TIMEOUT)
                         # message33 = 'In total your input will look like this:'
-                        bot.send_message(chat_id,
-                                         L10N['message33'][USER_LANGUAGE], parse_mode='html')
+                        send_text_message(chat_id, L10N['message33'][USER_LANGUAGE])
+
                         if new_location_summary(chat_id, from_user):
                             # message34 = 'Is that Ok? If yes, please click \"<b>Submit</b>\".\nOtherwise click \"<b>Reset</b>\" to start afresh'
-                            bot.send_message(chat_id,
-                                         L10N['message34'][USER_LANGUAGE],
-                                         parse_mode='html', reply_markup=submit_reset_menu_kb(USER_LANGUAGE))
+                            send_button_template_message(chat_id, text=L10N['message34'][USER_LANGUAGE], buttons=[
+                                {
+                                    # message56 = "Submit"
+                                    "title": L10N['message56'][USER_LANGUAGE],
+                                    "payload": L10N['message56'][USER_LANGUAGE]
+                                },
+                                {
+                                    # message55 = "Reset"
+                                    "title": L10N['message55'][USER_LANGUAGE],
+                                    "payload": L10N['message55'][USER_LANGUAGE]
+                                }
+                            ])
+
                         else:
                             # message35 = 'Hmm.. Some error occured. Could you please try again?'
-                            bot.send_message(chat_id,
-                                         L10N['message35'][USER_LANGUAGE],
-                                         parse_mode='html', reply_markup=you_got_teddy_menu_kb(USER_LANGUAGE))
+                            send_button_template_message(chat_id, text=L10N['message35'][USER_LANGUAGE], buttons=[
+                                {
+                                    # message52 = "Instructions"
+                                    "title": L10N['message52'][USER_LANGUAGE],
+                                    "payload": L10N['message52'][USER_LANGUAGE]
+                                },
+                                {
+                                    # message53 = "Add location"
+                                    "title": L10N['message53'][USER_LANGUAGE],
+                                    "payload": L10N['message53'][USER_LANGUAGE]
+                                },
+                                {
+                                    # message51 = "Contact support"
+                                    "title": L10N['message51'][USER_LANGUAGE],
+                                    "payload": L10N['message51'][USER_LANGUAGE]
+                                }
+                            ])
+
                     elif intent == 'reset':
                         CONTEXTS.clear()
                         CONTEXTS.append('code_correct')
                         # message36 = 'Ok, let\'s try once again'
-                        bot.send_message(chat_id,
-                                         L10N['message36'][USER_LANGUAGE],
-                                         parse_mode='html', reply_markup=you_got_teddy_menu_kb(USER_LANGUAGE))
+                        send_button_template_message(chat_id, text=L10N['message36'][USER_LANGUAGE], buttons=[
+                            {
+                                # message52 = "Instructions"
+                                "title": L10N['message52'][USER_LANGUAGE],
+                                "payload": L10N['message52'][USER_LANGUAGE]
+                            },
+                            {
+                                # message53 = "Add location"
+                                "title": L10N['message53'][USER_LANGUAGE],
+                                "payload": L10N['message53'][USER_LANGUAGE]
+                            },
+                            {
+                                # message51 = "Contact support"
+                                "title": L10N['message51'][USER_LANGUAGE],
+                                "payload": L10N['message51'][USER_LANGUAGE]
+                            }
+                        ])
+
                     else:
                         # Buttons | You got Teddy? | Teddy's story | Help | are activated irrespective of context
                         if not always_triggered(chat_id, intent, speech):
@@ -1864,8 +2451,24 @@ def main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=No
                 # Impropriate input (stickers, photo, location etc)
                 elif geodata or media or other_input:
                     # message37 = 'Sorry but only text is accepted as a comment. Could you please enter a text message?'
-                    bot.send_message(chat_id,
-                                     L10N['message37'][USER_LANGUAGE], parse_mode='html', reply_markup=next_reset_instructions_menu_kb(USER_LANGUAGE))
+                    send_button_template_message(chat_id, text=L10N['message37'][USER_LANGUAGE], buttons=[
+                        {
+                            # message49 = "Next"
+                            "title": L10N['message49'][USER_LANGUAGE],
+                            "payload": L10N['message49'][USER_LANGUAGE]
+                        },
+                        {
+                            # message55 = "Reset"
+                            "title": L10N['message55'][USER_LANGUAGE],
+                            "payload": L10N['message55'][USER_LANGUAGE]
+                        },
+                        {
+                            # message52 = "Instructions"
+                            "title": L10N['message52'][USER_LANGUAGE],
+                            "payload": L10N['message52'][USER_LANGUAGE]
+                        }
+                    ])
+
                 # Text input
                 else:
                     # Update contexts - leave only 'code_correct' and 'any_comments'
@@ -1875,9 +2478,8 @@ def main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=No
 
                     # Show user what he/she has entered as a comment
                     # message38 = 'Ok. So we\'ll treat the following as your comment:'
-                    bot.send_message(chat_id,
-                                     '{}\n<i>{}</i>'.format(L10N['message38'][USER_LANGUAGE], users_input),
-                                     parse_mode='html')
+                    message = '{}\n{}'.format(L10N['message38'][USER_LANGUAGE], users_input)
+                    send_text_message(chat_id, message)
 
                     # Save user's comment to NEWLOCATION
                     NEWLOCATION['comment'] = users_input
@@ -1885,19 +2487,43 @@ def main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=No
                     # Resume up user's input (location, photos, comment) and ask to confirm or reset
                     time.sleep(LONG_TIMEOUT)
                     # message33 = 'In total your input will look like this:'
-                    bot.send_message(chat_id,
-                                     L10N['message33'][USER_LANGUAGE], parse_mode='html')
+                    send_text_message(chat_id, L10N['message33'][USER_LANGUAGE])
+
                     if new_location_summary(chat_id, from_user):
                         time.sleep(SHORT_TIMEOUT)
                         # message34 = 'Is that Ok? If yes, please click \"<b>Submit</b>\".\nOtherwise click \"<b>Reset</b>\" to start afresh'
-                        bot.send_message(chat_id,
-                                         L10N['message34'][USER_LANGUAGE],
-                                         parse_mode='html', reply_markup=submit_reset_menu_kb(USER_LANGUAGE))
+                        send_button_template_message(chat_id, text=L10N['message34'][USER_LANGUAGE], buttons=[
+                            {
+                                # message56 = "Submit"
+                                "title": L10N['message56'][USER_LANGUAGE],
+                                "payload": L10N['message56'][USER_LANGUAGE]
+                            },
+                            {
+                                # message55 = "Reset"
+                                "title": L10N['message55'][USER_LANGUAGE],
+                                "payload": L10N['message55'][USER_LANGUAGE]
+                            }
+                        ])
                     else:
                         # message35 = 'Hmm.. Some error occured. Could you please try again?'
-                        bot.send_message(chat_id,
-                                         L10N['message35'][USER_LANGUAGE],
-                                         parse_mode='html', reply_markup=you_got_teddy_menu_kb(USER_LANGUAGE))
+                        send_button_template_message(chat_id, text=L10N['message35'][USER_LANGUAGE], buttons=[
+                            {
+                                # message52 = "Instructions"
+                                "title": L10N['message52'][USER_LANGUAGE],
+                                "payload": L10N['message52'][USER_LANGUAGE]
+                            },
+                            {
+                                # message53 = "Add location"
+                                "title": L10N['message53'][USER_LANGUAGE],
+                                "payload": L10N['message53'][USER_LANGUAGE]
+                            },
+                            {
+                                # message51 = "Contact support"
+                                "title": L10N['message51'][USER_LANGUAGE],
+                                "payload": L10N['message51'][USER_LANGUAGE]
+                            }
+                        ])
+
 
             # Block 2-6. Submitting new location - user clicked 'Submit'
             elif 'ready_for_submit' in CONTEXTS:
@@ -1913,22 +2539,69 @@ def main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=No
                         # message40 = 'New location added!\n\nSecret code for adding the next location:
                         # message41 = 'Please save it somewhere or don\'t delete this message.\nIf you are going to pass'
                         # message42 = 'to somebody please write this code similar to how you received it'
-                        bot.send_message(chat_id,
-                                         '{0} <code>{1}</code>\n\n{2} {3} {4}'.format(
-                                            L10N['message40'][USER_LANGUAGE], new_code_generated, L10N['message41'][USER_LANGUAGE], OURTRAVELLER, L10N['message42'][USER_LANGUAGE]),
-                                         parse_mode='html', reply_markup=intro_menu_kb(USER_LANGUAGE))
+                        message = '{0} {1}\n\n{2} {3} {4}'.format(
+                                            L10N['message40'][USER_LANGUAGE], new_code_generated, L10N['message41'][USER_LANGUAGE], OURTRAVELLER, L10N['message42'][USER_LANGUAGE])
+                        send_button_template_message(chat_id, text=message, buttons=[
+                            {
+                                # message44 = "My story"
+                                "title": L10N['message44'][USER_LANGUAGE],
+                                # message84 = "Tell your story"
+                                "payload": L10N['message84'][USER_LANGUAGE]
+                            },
+                            {
+                                # message45 = "FAQ"
+                                "title": L10N['message45'][USER_LANGUAGE],
+                                "payload": L10N['message45'][USER_LANGUAGE]
+                            },
+                            {
+                                # message46 = "You got"
+                                "title": "{} {}?".format(L10N['message46'][USER_LANGUAGE], OURTRAVELLER),
+                                # message85 = "You got fellowtraveler"
+                                "payload": L10N['message85'][USER_LANGUAGE]
+                            }
+                        ])
                     else:
                         # message43 = 'Hmm... Sorry, but for some reason I failed to save your data to database.\nI informed my author (<b>iurii.dziuban@gmail.com</b>) about this and hope that he finds the reason soon.\nSorry for inconveniences..'
-                        bot.send_message(chat_id,
-                                             L10N['message43'][USER_LANGUAGE],
-                                             parse_mode='html', reply_markup=intro_menu_kb(USER_LANGUAGE))
+                        send_button_template_message(chat_id, text=L10N['message43'][USER_LANGUAGE], buttons=[
+                            {
+                                # message44 = "My story"
+                                "title": L10N['message44'][USER_LANGUAGE],
+                                # message84 = "Tell your story"
+                                "payload": L10N['message84'][USER_LANGUAGE]
+                            },
+                            {
+                                # message45 = "FAQ"
+                                "title": L10N['message45'][USER_LANGUAGE],
+                                "payload": L10N['message45'][USER_LANGUAGE]
+                            },
+                            {
+                                # message46 = "You got"
+                                "title": "{} {}?".format(L10N['message46'][USER_LANGUAGE], OURTRAVELLER),
+                                # message85 = "You got fellowtraveler"
+                                "payload": L10N['message85'][USER_LANGUAGE]
+                            }
+                        ])
                 elif intent == 'reset':
                     CONTEXTS.clear()
                     CONTEXTS.append('code_correct')
                     # message36 = 'Ok, let\'s try once again'
-                    bot.send_message(chat_id,
-                                     L10N['message36'][USER_LANGUAGE],
-                                     parse_mode='html', reply_markup=you_got_teddy_menu_kb(USER_LANGUAGE))
+                    send_button_template_message(chat_id, text=L10N['message36'][USER_LANGUAGE], buttons=[
+                        {
+                            # message52 = "Instructions"
+                            "title": L10N['message52'][USER_LANGUAGE],
+                            "payload": L10N['message52'][USER_LANGUAGE]
+                        },
+                        {
+                            # message53 = "Add location"
+                            "title": L10N['message53'][USER_LANGUAGE],
+                            "payload": L10N['message53'][USER_LANGUAGE]
+                        },
+                        {
+                            # message51 = "Contact support"
+                            "title": L10N['message51'][USER_LANGUAGE],
+                            "payload": L10N['message51'][USER_LANGUAGE]
+                        }
+                    ])
                 else:
                     # Buttons | You got Teddy? | Teddy's story | Help | are activated irrespective of context
                     if not always_triggered(chat_id, intent, speech):
@@ -1984,12 +2657,11 @@ def message_webhook():
             return 'Invalid verification token', 403
 
     if request.method == 'POST':
-        print('\nPOST request')
 
         output = request.get_json()
 
-        print("\nrequest.get_json(): ")
-        print(output)
+        #print("\nrequest.get_json(): ")
+        #print(output)
 
         if output.get('object') == 'page':
             for entry in output.get('entry'):
@@ -2007,33 +2679,34 @@ def message_webhook():
 
                             # Text messages (emoji also get here - may filter out later)
                             if message.get('message'):
-                                if message.get('message').get('text') and not message.get('message').get('is_echo'):
-                                    user_wrote = message.get('message').get('text').encode('unicode_escape')
-                                    text_handler(user_id, from_user, user_wrote)
-                                    #send_message(user_id, {'text': 'You said "{}'.format(user_wrote.decode('unicode_escape'))})
+                                if not message.get('message').get('is_echo'):
+                                    if message.get('message').get('text'):
+                                        print('Text message received')
+                                        user_wrote = message.get('message').get('text')#.encode('unicode_escape')
+                                        text_handler(user_id, from_user, user_wrote)
+                                        #send_message(user_id, {'text': 'You said "{}'.format(user_wrote.decode('unicode_escape'))})
 
-                                # Attachments
-                                if message.get('message').get('attachments'):
-                                    for attachment in message.get('message').get('attachments'):
+                                    # Attachments
+                                    if message.get('message').get('attachments'):
+                                        for attachment in message.get('message').get('attachments'):
 
-                                        # Images (photos from camera, gifs, likes also get here)
-                                        if attachment.get('type') == 'image' and not attachment.get('payload').get(
-                                                'sticker_id'):
-                                            img_url = attachment.get('payload').get('url')
-                                            send_message(user_id, {
-                                                'text': 'Img url "{}'.format(img_url)})
-                                            photo_handler(user_id, from_user, img_url)
+                                            # Images (photos from camera, gifs, likes also get here)
+                                            if attachment.get('type') == 'image' and not attachment.get('payload').get(
+                                                    'sticker_id'):
+                                                img_url = attachment.get('payload').get('url')
+                                                #send_message(user_id, {'text': 'Img url "{}'.format(img_url)})
+                                                photo_handler(user_id, from_user, img_url)
 
-                                        # Location
-                                        elif attachment.get('type') == 'location':
-                                            latitude = attachment.get('payload').get('coordinates').get('lat')
-                                            longitude = attachment.get('payload').get('coordinates').get('long')
-                                            location_handler(user_id, from_user, latitude, longitude)
+                                            # Location
+                                            elif attachment.get('type') == 'location':
+                                                latitude = attachment.get('payload').get('coordinates').get('lat')
+                                                longitude = attachment.get('payload').get('coordinates').get('long')
+                                                location_handler(user_id, from_user, latitude, longitude)
 
-                                        # Other content types - audio, file, stickers (as images but with field 'sticker_id')
-                                        else:
-                                            print('Other content types')
-                                            other_content_types_handler(user_id, from_user)
+                                            # Other content types - audio, file, stickers (as images but with field 'sticker_id')
+                                            else:
+                                                print('Other content types')
+                                                other_content_types_handler(user_id, from_user)
 
                             # Button clicks; persistent menu and 'Getting started' button send fixed postback in English,
                             # other buttons send postback = title in corresponding language, which is then passed to
