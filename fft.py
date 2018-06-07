@@ -52,11 +52,12 @@ PHOTO_DIR = '../ft/static/uploads/{}/'.format(OURTRAVELLER) # where photos from 
 DOMAIN = 'http://fellowtraveler.club'
 PHOTO_DIR_OUT = '{}/static/uploads/{}/'.format(DOMAIN, OURTRAVELLER) # where photos from places visited are saved
 SERVICE_IMG_DIR = '{}/static/uploads/{}/service/'.format(DOMAIN, OURTRAVELLER) # where 'general info' images are (summary map, secret code example etc)
-SHORT_TIMEOUT = 1  # 2 # seconds, between messages for imitation of 'live' typing
-MEDIUM_TIMEOUT = 2  # 4
-LONG_TIMEOUT = 3  # 6
+SHORT_TIMEOUT = 0  # 2 # seconds, between messages for imitation of 'live' typing
+MEDIUM_TIMEOUT = 0  # 4
+LONG_TIMEOUT = 0  # 6
 SUPPORT_EMAIL = 'iurii.dziuban@gmail.com'
 USER_LANGUAGE = 'en'
+LAST_COMMAND = ''
 
 CONTEXTS = []   # holds last state
 NEWLOCATION = {    # holds data for traveler's location before storing it to DB
@@ -113,10 +114,29 @@ def get_user_first_name(user_id):
         return False
 
 
+def sender_action(user_id, action_type):
+    '''
+    Displaying a Sender Action (mark_seen, typing_on, typing_off) to FB user with user_id
+    '''
+    r = requests.post('https://graph.facebook.com/v2.6/me/messages',
+                        params = {'access_token': FB_ACCESS_TOKEN},
+                        data = json.dumps(
+                            {
+                                'recipient': {'id': user_id},
+                                'sender_action': 'typing_on'
+                            }
+                        ),
+                        headers={'Content-type': 'application/json'}
+                      )
+    if r.status_code != requests.codes.ok:
+        print(r.text)
+
+
 def send_message(user_id, our_message):
     '''
     Sends a our_message to FB user with recipient_id
     '''
+    #sender_action(user_id, 'typing_off')
     r = requests.post('https://graph.facebook.com/v2.6/me/messages',
                         params = {'access_token': FB_ACCESS_TOKEN},
                         data = json.dumps(
@@ -135,6 +155,7 @@ def send_text_message(user_id, text):
     '''
     Sends a text message (text) to FB user with recipient_id
     '''
+    #sender_action(user_id, 'typing_off')
     r = requests.post('https://graph.facebook.com/v2.6/me/messages',
                         params = {'access_token': FB_ACCESS_TOKEN},
                         data = json.dumps(
@@ -153,6 +174,7 @@ def send_media_template_message(user_id, attachment_id):
     '''
     Sends an image by attachment_id to FB user with user_id
     '''
+    #sender_action(user_id, 'typing_off')
     r = requests.post('https://graph.facebook.com/v2.6/me/messages',
                         params = {'access_token': FB_ACCESS_TOKEN},
                         data = json.dumps(
@@ -184,6 +206,7 @@ def send_text_message_share_location(user_id, text):
     '''
     Sends a text message (text) to FB user with user_id with a quick reply button for sharing location
     '''
+    #sender_action(user_id, 'typing_off')
     r = requests.post('https://graph.facebook.com/v2.6/me/messages',
                         params = {'access_token': FB_ACCESS_TOKEN},
                         data = json.dumps(
@@ -211,6 +234,7 @@ def send_generic_template_message(user_id, title, subtitle='', image_url='', but
     to FB user with recipient_id
     Buttons of 'postback' type, title=payload
     '''
+    #sender_action(user_id, 'typing_off')
     our_buttons = []
     for button in buttons:
         if 'type' not in button:
@@ -264,6 +288,7 @@ def send_button_template_message(user_id, text, buttons=[]):
     Sends a button template message (text + up to 3 buttons) to FB user with recipient_id
     Using buttons of 'postback'(by default) or URL type (if 'type': 'url' was indicated)
     '''
+    #sender_action(user_id, 'typing_off')
     our_buttons = []
     for button in buttons:
         if 'type' not in button:
@@ -373,14 +398,9 @@ def get_help(user_id):
                                  text=L10N['message8'][USER_LANGUAGE],
                                  buttons=[
         {
-            # message99 = "Start"
-            "title": L10N['message99'][USER_LANGUAGE],
-            "payload": 'START_TRIGGER'
-        },
-        {
-             # message45 = "FAQ"
-             "title": L10N['message45'][USER_LANGUAGE],
-             "payload": L10N['message45'][USER_LANGUAGE]
+            # message84 = "Tell your story"
+            "title": L10N['message84'][USER_LANGUAGE],
+            "payload": L10N['message84'][USER_LANGUAGE]
         },
         {
             # message46 = "You got"
@@ -700,10 +720,10 @@ def dialogflow(query, user_id, lang_code='en'):
     HEADERS = {'Authorization': 'Bearer ' + DF_TOKEN, 'content-type': 'application/json'}
     payload = {'query': query, 'sessionId': user_id, 'lang': USER_LANGUAGE}
     r = requests.post(URL, data=json.dumps(payload), headers=HEADERS).json()
-    print('#####')
-    print('Request from DF: ')
-    print(r)
-    print('#####')
+    #print('#####')
+    #print('Request from DF: ')
+    #print(r)
+    #print('#####')
     intent = r.get('result').get('metadata').get('intentName')
     speech = r.get('result').get('fulfillment').get('speech')
     status = r.get('status').get('code')
@@ -757,10 +777,11 @@ def always_triggered(chat_id, intent, speech):
         traveler_photo = SERVICE_IMG_DIR + OURTRAVELLER + '.jpg'
 
         # message57 = 'My name is'
-        message1 = '{} {}'.format(L10N['message57'][USER_LANGUAGE], OURTRAVELLER)
         # message58 = 'I\'m a traveler.\nMy dream is to see the world'
+        message1 = '{} {}. {}'.format(L10N['message57'][USER_LANGUAGE], OURTRAVELLER, L10N['message58'][USER_LANGUAGE])
+
         # message59 = 'Do you want to know more about my journey?'
-        message2 = L10N['message58'][USER_LANGUAGE] + '\n' + L10N['message59'][USER_LANGUAGE]
+        message2 = L10N['message59'][USER_LANGUAGE]
 
         send_generic_template_message(chat_id,
                                       title=message1,
@@ -908,9 +929,8 @@ def always_triggered(chat_id, intent, speech):
         message = L10N['message82'][USER_LANGUAGE]
         send_button_template_message(chat_id, text=message, buttons=[
             {
-                # message44 = "My story"
-                "title": L10N['message44'][USER_LANGUAGE],
                 # message84 = "Tell your story"
+                "title": L10N['message84'][USER_LANGUAGE],
                 "payload": L10N['message84'][USER_LANGUAGE]
             },
             {
@@ -934,9 +954,8 @@ def always_triggered(chat_id, intent, speech):
         message = L10N['message82'][USER_LANGUAGE]
         send_button_template_message(chat_id, text=message, buttons=[
             {
-                # message44 = "My story"
-                "title": L10N['message44'][USER_LANGUAGE],
                 # message84 = "Tell your story"
+                "title": L10N['message84'][USER_LANGUAGE],
                 "payload": L10N['message84'][USER_LANGUAGE]
             },
             {
@@ -960,9 +979,8 @@ def always_triggered(chat_id, intent, speech):
         message = L10N['message82'][USER_LANGUAGE]
         send_button_template_message(chat_id, text=message, buttons=[
             {
-                # message44 = "My story"
-                "title": L10N['message44'][USER_LANGUAGE],
                 # message84 = "Tell your story"
+                "title": L10N['message84'][USER_LANGUAGE],
                 "payload": L10N['message84'][USER_LANGUAGE]
             },
             {
@@ -1106,9 +1124,8 @@ def default_fallback(chat_id, intent, speech):
                                      text=message3,
                                      buttons=[
                                          {
-                                             # message44 = "My story"
-                                             "title": L10N['message44'][USER_LANGUAGE],
                                              # message84 = "Tell your story"
+                                             "title": L10N['message84'][USER_LANGUAGE],
                                              "payload": L10N['message84'][USER_LANGUAGE]
                                          },
                                          {
@@ -1196,17 +1213,17 @@ def save_static_map(traveller):
     https://developers.google.com/maps/documentation/static-maps/intro
     Requests a list of places visited by traveller from DB and draws a static (png) map
     '''
-    print('\nsave_static_map()')
+    #print('\nsave_static_map()')
     try:
         markers = ft_functions.get_location_history(traveller, PHOTO_DIR)['mymarkers'][::-1]
         latlongparams = ''
         for index, marker in enumerate(markers):
             latlongparams += '&markers=color:green%7Clabel:{}%7C{},{}'.format(index + 1, marker['lat'], marker['lng'])
         query = 'https://maps.googleapis.com/maps/api/staticmap?size=700x400&maptype=roadmap{}&key={}'.format(latlongparams, GOOGLE_MAPS_API_KEY)
-        print('query: {}'.format(query))
+        #print('query: {}'.format(query))
 
         path = PHOTO_DIR + traveller + '_summary_map.png'
-        print('path: {}'.format(path))
+        #print('path: {}'.format(path))
 
         r = requests.get(query, timeout=0.5)
         if r.status_code == 200:
@@ -1260,8 +1277,8 @@ def journey_begins(chat_id, traveller):
             # message92 = 'I covered about'
             # message93 = 'km it total and currently I\'m nearly'km from home
             # message94 = 'km from home'
-            speech = '{} <b>{}</b> {} <b>{}</b> {} ({}) {} <b>{}</b> {}.\n\n' \
-                          '{} <b>{}</b> {} <b>{}</b> {}'.format(
+            speech = '{} {} {} {} {} ({}) {} {} {}.\n\n' \
+                          '{} {} {} {} {}'.format(
                 L10N['message89'][USER_LANGUAGE],
             total_locations, L10N['message90'][USER_LANGUAGE], total_countries, countries_form, countries_list, L10N['message91'][USER_LANGUAGE], journey_duration, day_or_days,
                 L10N['message92'][USER_LANGUAGE], total_distance, L10N['message93'][USER_LANGUAGE], distance_from_home, L10N['message94'][USER_LANGUAGE])
@@ -1300,7 +1317,7 @@ def the_1st_place(chat_id, traveller, if_to_continue):
 
         # message66 = '<strong>Place #1</strong>\nI started my journey on'
         # message67 = 'from'
-        message1 = '{} {} ({}) {} \n<i>{}</i>'.format(L10N['message66'][USER_LANGUAGE], start_date, day_or_days, L10N['message67'][USER_LANGUAGE], formatted_address)
+        message1 = '{} {} ({}) {} \n{}'.format(L10N['message66'][USER_LANGUAGE], start_date, day_or_days, L10N['message67'][USER_LANGUAGE], formatted_address)
         send_text_message(chat_id, message1)
 
         # Sending location as a static GMap in generic template (lat/long as title, url button with link to map)
@@ -1312,7 +1329,7 @@ def the_1st_place(chat_id, traveller, if_to_continue):
                 # message65 = 'Open map in browser'
                 'title': L10N['message65'][USER_LANGUAGE],
                 'type': 'web_url',
-                'url': 'https://www.google.com/maps/@{},{},15z'.format(lat, long)
+                'url': 'https://www.google.com/maps/search/?api=1&query={},{}'.format(lat, long)
             }
         ])
 
@@ -1397,14 +1414,13 @@ def every_place(chat_id, traveller, location_to_show, if_to_continue):
         day_or_days = '{} {}'.format(time_passed, L10N['message75'][USER_LANGUAGE])
     # message76 = 'Place #'
     # message77 = '\nOn'
-    # message78 = 'I was in'
-    message1 = '{}{} {} {} ({}) {} \n{}'.format(L10N['message76'][USER_LANGUAGE], location_to_show + 1, L10N['message77'][USER_LANGUAGE],
-                                                                                             location_date, day_or_days, L10N['message78'][USER_LANGUAGE],
-                                                                                             formatted_address)
+    # message101 = 'I was here:'
+    message1 = '{}{} {} {} ({}) {}'.format(L10N['message76'][USER_LANGUAGE], location_to_show + 1, L10N['message77'][USER_LANGUAGE],
+                                                                                             location_date, day_or_days, L10N['message101'][USER_LANGUAGE])
     send_text_message(chat_id, message1)
 
     # Sending location as a static GMap in generic template (lat/long as title, url button with link to map)
-    message3 = '{}, {}'.format(lat, long)
+    message3 = formatted_address
     map_image = 'https://maps.googleapis.com/maps/api/staticmap?key={}&markers=color:green|{},{}&size=700x400&maptype=roadmap'.format(
         GOOGLE_MAPS_API_KEY, lat, long)
     send_generic_template_message(chat_id, title=message3, image_url=map_image, buttons=[
@@ -1412,7 +1428,7 @@ def every_place(chat_id, traveller, location_to_show, if_to_continue):
             # message65 = 'Open map in browser'
             'title': L10N['message65'][USER_LANGUAGE],
             'type': 'web_url',
-            'url': 'https://www.google.com/maps/@{},{},15z'.format(lat, long)
+            'url': 'https://www.google.com/maps/search/?api=1&query={},{}'.format(lat, long)
         }
     ])
 
@@ -1539,7 +1555,7 @@ def new_location_summary(chat_id, from_user):
                 # message65 = 'Open map in browser'
                 'title': L10N['message65'][USER_LANGUAGE],
                 'type': 'web_url',
-                'url': 'https://www.google.com/maps/@{},{},15z'.format(lat, long)
+                'url': 'https://www.google.com/maps/search/?api=1&query={},{}'.format(lat, long)
             }
         ])
 
@@ -1549,7 +1565,7 @@ def new_location_summary(chat_id, from_user):
             for photo in photos:
                 send_media_template_message(chat_id, photo)
 
-        author = '{}'.format(from_user.first_name)
+        author = '{}'.format(from_user)
         comment = NEWLOCATION['comment']
         if comment != '':
             # message70 = 'My new friend'
@@ -1558,7 +1574,7 @@ def new_location_summary(chat_id, from_user):
                                                     L10N['message71'][USER_LANGUAGE], comment)
         else:
             # message72 = 'I got acquainted with a new friend - '
-            message2 = '{}<b>{}</b> :)'.format(L10N['message72'][USER_LANGUAGE], author)
+            message2 = '{} {} :)'.format(L10N['message72'][USER_LANGUAGE], author)
         send_text_message(chat_id, message2)
         return True
     except Exception as e:
@@ -1654,9 +1670,8 @@ def main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=No
                     message = L10N['message9'][USER_LANGUAGE]
                     send_button_template_message(chat_id, text=message, buttons=[
                         {
-                            # message44 = "My story"
-                            "title": L10N['message44'][USER_LANGUAGE],
                             # message84 = "Tell your story"
+                            "title": L10N['message84'][USER_LANGUAGE],
                             "payload": L10N['message84'][USER_LANGUAGE]
                         },
                         {
@@ -1678,9 +1693,8 @@ def main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=No
                     message = L10N['message10'][USER_LANGUAGE]
                     send_button_template_message(chat_id, text=message, buttons=[
                         {
-                            # message44 = "My story"
-                            "title": L10N['message44'][USER_LANGUAGE],
                             # message84 = "Tell your story"
+                            "title": L10N['message84'][USER_LANGUAGE],
                             "payload": L10N['message84'][USER_LANGUAGE]
                         },
                         {
@@ -1724,9 +1738,8 @@ def main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=No
                 message = L10N['message12'][USER_LANGUAGE]
                 send_button_template_message(chat_id, text=message, buttons=[
                     {
-                        # message44 = "My story"
-                        "title": L10N['message44'][USER_LANGUAGE],
                         # message84 = "Tell your story"
+                        "title": L10N['message84'][USER_LANGUAGE],
                         "payload": L10N['message84'][USER_LANGUAGE]
                     },
                     {
@@ -1763,9 +1776,8 @@ def main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=No
             message = L10N['message13'][USER_LANGUAGE]
             send_button_template_message(chat_id, text=message, buttons=[
                 {
-                    # message44 = "My story"
-                    "title": L10N['message44'][USER_LANGUAGE],
                     # message84 = "Tell your story"
+                    "title": L10N['message84'][USER_LANGUAGE],
                     "payload": L10N['message84'][USER_LANGUAGE]
                 },
                 {
@@ -1810,9 +1822,8 @@ def main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=No
                 message = L10N['message14'][USER_LANGUAGE]
                 send_button_template_message(chat_id, text=message, buttons=[
                     {
-                        # message44 = "My story"
-                        "title": L10N['message44'][USER_LANGUAGE],
                         # message84 = "Tell your story"
+                        "title": L10N['message84'][USER_LANGUAGE],
                         "payload": L10N['message84'][USER_LANGUAGE]
                     },
                     {
@@ -1835,9 +1846,8 @@ def main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=No
                 message = L10N['message15'][USER_LANGUAGE]
                 send_button_template_message(chat_id, text=message, buttons=[
                     {
-                        # message44 = "My story"
-                        "title": L10N['message44'][USER_LANGUAGE],
                         # message84 = "Tell your story"
+                        "title": L10N['message84'][USER_LANGUAGE],
                         "payload": L10N['message84'][USER_LANGUAGE]
                     },
                     {
@@ -1908,9 +1918,8 @@ def main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=No
             message = L10N['message13'][USER_LANGUAGE]
             send_button_template_message(chat_id, text=message, buttons=[
                 {
-                    # message44 = "My story"
-                    "title": L10N['message44'][USER_LANGUAGE],
                     # message84 = "Tell your story"
+                    "title": L10N['message84'][USER_LANGUAGE],
                     "payload": L10N['message84'][USER_LANGUAGE]
                 },
                 {
@@ -1961,9 +1970,8 @@ def main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=No
                 # message15 = 'And that\'s all my journey so far ;)\n\nWhat would you like to do next? We can just talk or use this menu:'
                 send_button_template_message(chat_id, text=L10N['message15'][USER_LANGUAGE], buttons=[
                     {
-                        # message44 = "My story"
-                        "title": L10N['message44'][USER_LANGUAGE],
                         # message84 = "Tell your story"
+                        "title": L10N['message84'][USER_LANGUAGE],
                         "payload": L10N['message84'][USER_LANGUAGE]
                     },
                     {
@@ -2005,9 +2013,8 @@ def main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=No
             message = '{}. {}'.format(L10N['message6'][USER_LANGUAGE], L10N['message8'][USER_LANGUAGE])
             send_button_template_message(chat_id, text=message, buttons=[
                 {
-                    # message44 = "My story"
-                    "title": L10N['message44'][USER_LANGUAGE],
                     # message84 = "Tell your story"
+                    "title": L10N['message84'][USER_LANGUAGE],
                     "payload": L10N['message84'][USER_LANGUAGE]
                 },
                 {
@@ -2543,9 +2550,8 @@ def main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=No
                                             L10N['message40'][USER_LANGUAGE], new_code_generated, L10N['message41'][USER_LANGUAGE], OURTRAVELLER, L10N['message42'][USER_LANGUAGE])
                         send_button_template_message(chat_id, text=message, buttons=[
                             {
-                                # message44 = "My story"
-                                "title": L10N['message44'][USER_LANGUAGE],
                                 # message84 = "Tell your story"
+                                "title": L10N['message84'][USER_LANGUAGE],
                                 "payload": L10N['message84'][USER_LANGUAGE]
                             },
                             {
@@ -2564,9 +2570,8 @@ def main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=No
                         # message43 = 'Hmm... Sorry, but for some reason I failed to save your data to database.\nI informed my author (<b>iurii.dziuban@gmail.com</b>) about this and hope that he finds the reason soon.\nSorry for inconveniences..'
                         send_button_template_message(chat_id, text=L10N['message43'][USER_LANGUAGE], buttons=[
                             {
-                                # message44 = "My story"
-                                "title": L10N['message44'][USER_LANGUAGE],
                                 # message84 = "Tell your story"
+                                "title": L10N['message84'][USER_LANGUAGE],
                                 "payload": L10N['message84'][USER_LANGUAGE]
                             },
                             {
@@ -2647,6 +2652,7 @@ def index():
 
 @app.route("/webhook/", methods=['GET', 'POST'])
 def message_webhook():
+    global LAST_COMMAND
 
     if request.method == 'GET':
         print('\nGET request')
@@ -2682,9 +2688,16 @@ def message_webhook():
                                 if not message.get('message').get('is_echo'):
                                     if message.get('message').get('text'):
                                         print('Text message received')
+                                        #sender_action(user_id, 'mark_seen')
+                                        #sender_action(user_id, 'typing_on')
                                         user_wrote = message.get('message').get('text')#.encode('unicode_escape')
-                                        text_handler(user_id, from_user, user_wrote)
-                                        #send_message(user_id, {'text': 'You said "{}'.format(user_wrote.decode('unicode_escape'))})
+
+                                        # Ugly solution agains duplicate responses to same user's commands (due to not confirming
+                                        # messages receipt from FB in 20sec) - need to use some multythreading or smth like that
+                                        command_number = message.get('message').get('seq')
+                                        if command_number != LAST_COMMAND:
+                                            LAST_COMMAND = command_number
+                                            text_handler(user_id, from_user, user_wrote)
 
                                     # Attachments
                                     if message.get('message').get('attachments'):
@@ -2695,24 +2708,48 @@ def message_webhook():
                                                     'sticker_id'):
                                                 img_url = attachment.get('payload').get('url')
                                                 #send_message(user_id, {'text': 'Img url "{}'.format(img_url)})
-                                                photo_handler(user_id, from_user, img_url)
+                                                #sender_action(user_id, 'mark_seen')
+                                                #sender_action(user_id, 'typing_on')
+
+                                                # Ugly solution agains duplicate responses to same user's commands (due to not confirming
+                                                # messages receipt from FB in 20sec) - need to use some multythreading or smth like that
+                                                command_number = message.get('message').get('seq')
+                                                if command_number != LAST_COMMAND:
+                                                    LAST_COMMAND = command_number
+                                                    photo_handler(user_id, from_user, img_url)
 
                                             # Location
                                             elif attachment.get('type') == 'location':
                                                 latitude = attachment.get('payload').get('coordinates').get('lat')
                                                 longitude = attachment.get('payload').get('coordinates').get('long')
-                                                location_handler(user_id, from_user, latitude, longitude)
+                                                #sender_action(user_id, 'mark_seen')
+                                                #sender_action(user_id, 'typing_on')
+
+                                                # Ugly solution agains duplicate responses to same user's commands (due to not confirming
+                                                # messages receipt from FB in 20sec) - need to use some multythreading or smth like that
+                                                command_number = message.get('message').get('seq')
+                                                if command_number != LAST_COMMAND:
+                                                    LAST_COMMAND = command_number
+                                                    location_handler(user_id, from_user, latitude, longitude)
 
                                             # Other content types - audio, file, stickers (as images but with field 'sticker_id')
                                             else:
                                                 print('Other content types')
-                                                other_content_types_handler(user_id, from_user)
+                                                # Ugly solution agains duplicate responses to same user's commands (due to not confirming
+                                                # messages receipt from FB in 20sec) - need to use some multythreading or smth like that
+                                                command_number = message.get('message').get('seq')
+                                                if command_number != LAST_COMMAND:
+                                                    LAST_COMMAND = command_number
+                                                    other_content_types_handler(user_id, from_user)
+
 
                             # Button clicks; persistent menu and 'Getting started' button send fixed postback in English,
                             # other buttons send postback = title in corresponding language, which is then passed to
                             # Dialogflow for NLU (thus the same commands as for these buttons can be triggered with usual text)
                             if message.get('postback') and message.get('postback').get('payload'):
                                 button_payload = message.get('postback').get('payload')
+                                #sender_action(user_id, 'mark_seen')
+                                #sender_action(user_id, 'typing_on')
                                 # Two main cases:
                                 # 1. Persistent menu buttons and 'Getting started' button
                                 if button_payload == 'GETTING_STARTED' or button_payload == 'START_TRIGGER':
@@ -2729,9 +2766,13 @@ def message_webhook():
 
                                 # 2. All other buttons
                                 else:
+                                    #sender_action(user_id, 'mark_seen')
+                                    #sender_action(user_id, 'typing_on')
                                     button_payload = message.get('postback').get('payload')
                                     button_click_handler(user_id, from_user, button_payload)
 
+
+        print('Sending 200 Ok response')
         return "Success", 200
 
 if __name__ == "__main__":

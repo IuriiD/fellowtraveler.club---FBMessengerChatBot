@@ -242,9 +242,9 @@ L10N = {
         'uk': 'Хм.. Вибачте, але я певної причини зберегти Ваші дані у базі данних не вдалося.\nЯ проінформував свого автора (iurii.dziuban@gmail.com) про це і сподіваюсь, що він швидко розбереться.\nВибачте за незручності..'
     },
     'message44': {
-        'en': 'My story',
-        'ru': 'Моя история',
-        'uk': 'Моя історія'
+        'en': 'Tell your story',
+        'ru': 'Расскажи свою историю',
+        'uk': 'Розкажи свою історію'
     },
     'message45': {
         'en': 'FAQ',
@@ -531,5 +531,10 @@ L10N = {
         'en': 'Is English Ok? You also can switch language in Menu>FAQ/Settings>Change language',
         'ru': 'На русском Ok? Вы также можете поменять язык в Menu>FAQ/Settings>Change language',
         'uk': 'Українською Ok? Ви також можете змінити мову у Menu>FAQ/Settings>Change language'
-    }
+    },
+    'message101': {
+        'en': 'I was here:',
+        'ru': 'я был тут:',
+        'uk': 'я був тут:'
+    },
 }

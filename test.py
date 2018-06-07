@@ -140,7 +140,12 @@ def save_static_map(traveller):
 user_id = '1953498254661052'
 print(save_static_map('Teddy'))
 
-
+curl -X POST -H "Content-Type: application/json" -d '{
+  "recipient":{
+    "id":"<PSID>"
+  },
+  "sender_action":"typing_on"
+}' "https://graph.facebook.com/v2.6/me/messages?access_token=<PAGE_ACCESS_TOKEN>"
 
 
 '''
@@ -268,9 +273,9 @@ curl -X POST -H "Content-Type: application/json" -d '{
       "composer_input_disabled": false,
       "call_to_actions":[
           {
-              "title": "Start",
+              "title": "Tell your story",
               "type": "postback",
-              "payload": "START_TRIGGER"
+              "payload": "Tell your story"
           },
           {
               "title": "FAQ/Settings",
@@ -300,9 +305,9 @@ curl -X POST -H "Content-Type: application/json" -d '{
           "composer_input_disabled": false,
           "call_to_actions": [
               {
-                  "title": "Початок",
+                  "title": "Розкажи свою історію",
                   "type": "postback",
-                  "payload": "START_TRIGGER"
+                  "payload": "Розкажи свою історію"
               },
               {
                   "title": "ЧаПи/Настройки",
@@ -332,9 +337,9 @@ curl -X POST -H "Content-Type: application/json" -d '{
           "composer_input_disabled": false,
           "call_to_actions": [
               {
-                  "title": "Начало",
+                  "title": "Расскажи свою историю",
                   "type": "postback",
-                  "payload": "START_TRIGGER"
+                  "payload": "Расскажи свою историю"
               },
               {
                   "title": "ЧаВо/Настройки",
