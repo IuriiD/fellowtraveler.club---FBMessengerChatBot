@@ -283,6 +283,35 @@ def send_generic_template_message(user_id, title, subtitle='', image_url='', but
         print(r.text)
 
 
+def img_to_fb_and_get_id(image_url):
+    '''
+        Function uploads an image from image_url to FB's servers and gets an ID for it
+    '''
+    r = requests.post('https://graph.facebook.com/v2.6/me/message_attachments',
+                        params = {'access_token': FB_ACCESS_TOKEN},
+                        data = json.dumps(
+                            {
+                                'message': {
+                                    'attachment': {
+                                        'type': 'image',
+                                        'payload': {
+                                            'is_reusable': True,
+                                            'url': image_url
+                                        }
+                                    }
+                                }
+                            }
+                        ),
+                        headers={'Content-type': 'application/json'}
+                      )
+    r_json = json.loads(r.text)
+    if 'error' in r_json:
+        print(r_json)
+        return False
+    else:
+        return str(r_json['attachment_id'])
+
+
 def send_button_template_message(user_id, text, buttons=[]):
     '''
     Sends a button template message (text + up to 3 buttons) to FB user with recipient_id
@@ -374,9 +403,9 @@ def travelers_story_intro(user_id):
             'payload': L10N['message48'][USER_LANGUAGE]
         },
         {
-            # message46 = "You got"
-            'title': "{} {}?".format(L10N['message46'][USER_LANGUAGE], OURTRAVELLER),
-            # message85 = "You got fellowtraveler"
+            # message46 = "I got"
+            'title': "{} {}!".format(L10N['message46'][USER_LANGUAGE], OURTRAVELLER),
+            # message85 = "I got fellowtraveler"
             'payload': L10N['message85'][USER_LANGUAGE]
         }
     ])
@@ -403,9 +432,9 @@ def get_help(user_id):
             "payload": L10N['message84'][USER_LANGUAGE]
         },
         {
-            # message46 = "You got"
-            # message85 = "You got fellowtraveler"
-            "title": '{} {}?'.format(L10N['message46'][USER_LANGUAGE], OURTRAVELLER),
+            # message46 = "I got"
+            # message85 = "I got fellowtraveler"
+            "title": '{} {}!'.format(L10N['message46'][USER_LANGUAGE], OURTRAVELLER),
             "payload": L10N['message85'][USER_LANGUAGE]
         }
     ])
@@ -656,18 +685,25 @@ def photo_handler(user_id, from_user, img_url):
     if USER_LANGUAGE == None:
         USER_LANGUAGE = get_language(user_id)
 
-    # Get, save photos, add paths to NEWLOCATION['photos]
+    # Get, save photos, add paths to NEWLOCATION['photos] -
+    # Upload image to FB servers, get IDs, add them to NEWLOCATION['photos_FB_ids']
     if 'media_input' in CONTEXTS:
-        # https://scontent.xx.fbcdn.net/v/t1.15752-9/34416397_446356285788138_8430653788502622208_n.jpg?_nc_cat=0&_nc_ad=z-m&_nc_cid=0&oh=c7c985bab096d0646ea5333064ff6651&oe=5B7F0DD6
+        # Save image to projects server for use in web-version
         file_name_wo_extension = 'fellowtravelerclub-{}'.format(OURTRAVELLER)
         img_url_part1 = img_url.split('?_nc_cat')[0]
         file_extension = img_url_part1.split('.')[-1]
         current_datetime = datetime.now().strftime("%d%m%y%H%M%S")
         random_int = random.randint(100, 999)
-        path4db = file_name_wo_extension + '-' + current_datetime + str(random_int) + file_extension
+        path4db = file_name_wo_extension + '-' + current_datetime + str(random_int) + '.' + file_extension
         path = PHOTO_DIR + path4db
 
-        r = requests.get(img_url, timeout=0.5)
+        # Upload image to FB server and get ID
+        # https://scontent.xx.fbcdn.net/v/t1.15752-9/34416397_446356285788138_8430653788502622208_n.jpg?_nc_cat=0&_nc_ad=z-m&_nc_cid=0&oh=c7c985bab096d0646ea5333064ff6651&oe=5B7F0DD6
+        fb_image_id = img_to_fb_and_get_id(img_url)
+        if fb_image_id:
+            NEWLOCATION['photos_FB_ids'].append(fb_image_id)
+
+        r = requests.get(img_url, timeout=5)
         if r.status_code == 200:
             with open(path, 'wb') as f:
                 f.write(r.content)
@@ -799,8 +835,8 @@ def always_triggered(chat_id, intent, speech):
                                               'payload': L10N['message48'][USER_LANGUAGE]
                                           },
                                           {
-                                              # message46 = "You got"
-                                              'title': "{} {}?".format(L10N['message46'][USER_LANGUAGE], OURTRAVELLER),
+                                              # message46 = "I got"
+                                              'title': "{} {}!".format(L10N['message46'][USER_LANGUAGE], OURTRAVELLER),
                                               'payload': L10N['message85'][USER_LANGUAGE]
                                           }
                                       ]
@@ -939,9 +975,9 @@ def always_triggered(chat_id, intent, speech):
                 "payload": L10N['message45'][USER_LANGUAGE]
             },
             {
-                # message46 = "You got"
-                "title": "{} {}?".format(L10N['message46'][USER_LANGUAGE], OURTRAVELLER),
-                # message85 = "You got fellowtraveler"
+                # message46 = "I got"
+                "title": "{} {}!".format(L10N['message46'][USER_LANGUAGE], OURTRAVELLER),
+                # message85 = "I got fellowtraveler"
                 "payload": L10N['message85'][USER_LANGUAGE]
             }
         ])
@@ -964,9 +1000,9 @@ def always_triggered(chat_id, intent, speech):
                 "payload": L10N['message45'][USER_LANGUAGE]
             },
             {
-                # message46 = "You got"
-                "title": "{} {}?".format(L10N['message46'][USER_LANGUAGE], OURTRAVELLER),
-                # message85 = "You got fellowtraveler"
+                # message46 = "I got"
+                "title": "{} {}!".format(L10N['message46'][USER_LANGUAGE], OURTRAVELLER),
+                # message85 = "I got fellowtraveler"
                 "payload": L10N['message85'][USER_LANGUAGE]
             }
         ])
@@ -989,9 +1025,9 @@ def always_triggered(chat_id, intent, speech):
                 "payload": L10N['message45'][USER_LANGUAGE]
             },
             {
-                # message46 = "You got"
-                "title": "{} {}?".format(L10N['message46'][USER_LANGUAGE], OURTRAVELLER),
-                # message85 = "You got fellowtraveler"
+                # message46 = "I got"
+                "title": "{} {}!".format(L10N['message46'][USER_LANGUAGE], OURTRAVELLER),
+                # message85 = "I got fellowtraveler"
                 "payload": L10N['message85'][USER_LANGUAGE]
             }
         ])
@@ -1134,9 +1170,9 @@ def default_fallback(chat_id, intent, speech):
                                              "payload": L10N['message45'][USER_LANGUAGE]
                                          },
                                          {
-                                             # message46 = "You got"
-                                             "title": "{} {}?".format(L10N['message46'][USER_LANGUAGE], OURTRAVELLER),
-                                             # message85 = "You got fellowtraveler"
+                                             # message46 = "I got"
+                                             "title": "{} {}!".format(L10N['message46'][USER_LANGUAGE], OURTRAVELLER),
+                                             # message85 = "I got fellowtraveler"
                                              "payload": L10N['message85'][USER_LANGUAGE]
                                          }
                                      ]
@@ -1680,9 +1716,9 @@ def main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=No
                             "payload": L10N['message45'][USER_LANGUAGE]
                         },
                         {
-                            # message46 = "You got"
-                            "title": "{} {}?".format(L10N['message46'][USER_LANGUAGE], OURTRAVELLER),
-                            # message85 = "You got fellowtraveler"
+                            # message46 = "I got"
+                            "title": "{} {}!".format(L10N['message46'][USER_LANGUAGE], OURTRAVELLER),
+                            # message85 = "I got fellowtraveler"
                             "payload": L10N['message85'][USER_LANGUAGE]
                         }
                     ])
@@ -1703,9 +1739,9 @@ def main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=No
                             "payload": L10N['message45'][USER_LANGUAGE]
                         },
                         {
-                            # message46 = "You got"
-                            "title": "{} {}?".format(L10N['message46'][USER_LANGUAGE], OURTRAVELLER),
-                            # message85 = "You got fellowtraveler"
+                            # message46 = "I got"
+                            "title": "{} {}!".format(L10N['message46'][USER_LANGUAGE], OURTRAVELLER),
+                            # message85 = "I got fellowtraveler"
                             "payload": L10N['message85'][USER_LANGUAGE]
                         }
                     ])
@@ -1748,8 +1784,8 @@ def main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=No
                         "payload": L10N['message45'][USER_LANGUAGE]
                     },
                     {
-                        # message46 = "You got"
-                        "title": "{} {}?".format(L10N['message46'][USER_LANGUAGE], OURTRAVELLER),
+                        # message46 = "I got"
+                        "title": "{} {}!".format(L10N['message46'][USER_LANGUAGE], OURTRAVELLER),
                         # message85 = "You got fellowtraveler"
                         "payload": L10N['message85'][USER_LANGUAGE]
                     }
@@ -1786,9 +1822,9 @@ def main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=No
                     "payload": L10N['message45'][USER_LANGUAGE]
                 },
                 {
-                    # message46 = "You got"
-                    "title": "{} {}?".format(L10N['message46'][USER_LANGUAGE], OURTRAVELLER),
-                    # message85 = "You got fellowtraveler"
+                    # message46 = "I got"
+                    "title": "{} {}!".format(L10N['message46'][USER_LANGUAGE], OURTRAVELLER),
+                    # message85 = "I got fellowtraveler"
                     "payload": L10N['message85'][USER_LANGUAGE]
                 }
             ])
@@ -1832,9 +1868,9 @@ def main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=No
                         "payload": L10N['message45'][USER_LANGUAGE]
                     },
                     {
-                        # message46 = "You got"
-                        "title": "{} {}?".format(L10N['message46'][USER_LANGUAGE], OURTRAVELLER),
-                        # message85 = "You got fellowtraveler"
+                        # message46 = "I got"
+                        "title": "{} {}!".format(L10N['message46'][USER_LANGUAGE], OURTRAVELLER),
+                        # message85 = "I got fellowtraveler"
                         "payload": L10N['message85'][USER_LANGUAGE]
                     }
                 ])
@@ -1856,9 +1892,9 @@ def main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=No
                         "payload": L10N['message45'][USER_LANGUAGE]
                     },
                     {
-                        # message46 = "You got"
-                        "title": "{} {}?".format(L10N['message46'][USER_LANGUAGE], OURTRAVELLER),
-                        # message85 = "You got fellowtraveler"
+                        # message46 = "I got"
+                        "title": "{} {}!".format(L10N['message46'][USER_LANGUAGE], OURTRAVELLER),
+                        # message85 = "I got fellowtraveler"
                         "payload": L10N['message85'][USER_LANGUAGE]
                     }
                 ])
@@ -1928,9 +1964,9 @@ def main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=No
                     "payload": L10N['message45'][USER_LANGUAGE]
                 },
                 {
-                    # message46 = "You got"
-                    "title": "{} {}?".format(L10N['message46'][USER_LANGUAGE], OURTRAVELLER),
-                    # message85 = "You got fellowtraveler"
+                    # message46 = "I got"
+                    "title": "{} {}!".format(L10N['message46'][USER_LANGUAGE], OURTRAVELLER),
+                    # message85 = "I got fellowtraveler"
                     "payload": L10N['message85'][USER_LANGUAGE]
                 }
             ])
@@ -1980,9 +2016,9 @@ def main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=No
                         "payload": L10N['message45'][USER_LANGUAGE]
                     },
                     {
-                        # message46 = "You got"
-                        "title": "{} {}?".format(L10N['message46'][USER_LANGUAGE], OURTRAVELLER),
-                        # message85 = "You got fellowtraveler"
+                        # message46 = "I got"
+                        "title": "{} {}!".format(L10N['message46'][USER_LANGUAGE], OURTRAVELLER),
+                        # message85 = "I got fellowtraveler"
                         "payload": L10N['message85'][USER_LANGUAGE]
                     }
                 ])
@@ -2023,9 +2059,9 @@ def main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=No
                     "payload": L10N['message45'][USER_LANGUAGE]
                 },
                 {
-                    # message46 = "You got"
-                    "title": "{} {}?".format(L10N['message46'][USER_LANGUAGE], OURTRAVELLER),
-                    # message85 = "You got fellowtraveler"
+                    # message46 = "I got"
+                    "title": "{} {}!".format(L10N['message46'][USER_LANGUAGE], OURTRAVELLER),
+                    # message85 = "I got fellowtraveler"
                     "payload": L10N['message85'][USER_LANGUAGE]
                 }
             ])
@@ -2149,9 +2185,9 @@ def main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=No
             # message21 = 'Here are our detailed instructions for those who got'
             send_button_template_message(chat_id, text=L10N['message21'][USER_LANGUAGE], buttons=[
                 {
-                    # message52 = "Instructions"
-                    "title": L10N['message52'][USER_LANGUAGE],
-                    "payload": L10N['message52'][USER_LANGUAGE]
+                    # message44 = 'Tell your story'
+                    "title": L10N['message44'][USER_LANGUAGE],
+                    "payload": L10N['message44'][USER_LANGUAGE]
                 },
                 {
                     # message53 = "Add location"
@@ -2182,9 +2218,9 @@ def main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=No
                 if intent == 'location_received':  # sharing or current location
                     # Reverse geocode lat/lng to geodata
                     # Also as this is the 1st data for new locations, fill the fields 'author', 'channel' and 'user_id_on_channel'
-                    NEWLOCATION['author'] = from_user.first_name
-                    NEWLOCATION['user_id_on_channel'] = from_user.id
-                    NEWLOCATION['channel'] = 'Telegram'
+                    NEWLOCATION['author'] = from_user
+                    NEWLOCATION['user_id_on_channel'] = chat_id
+                    NEWLOCATION['channel'] = 'Facebook'
                     NEWLOCATION['longitude'] = geodata['lng']
                     NEWLOCATION['latitude'] = geodata['lat']
                     # Erase the remaining fields of NEWLOCATION in case user restarts
@@ -2195,6 +2231,8 @@ def main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=No
                     NEWLOCATION['place_id'] = None
                     NEWLOCATION['comment'] = None
                     NEWLOCATION['photos'] = []
+                    NEWLOCATION['photos_FB_ids'] = []
+                    NEWLOCATION['photos_TG_ids'] = []
 
                     gmaps_geocoder(geodata['lat'], geodata['lng'])
                     CONTEXTS.remove('location_input')
@@ -2286,13 +2324,14 @@ def main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=No
                     ])
 
             # Block 2-4. User should be uploading a/some photo/-s.
-            elif 'media_input' in CONTEXTS:
+            elif 'media_input' in CONTEXTS and 'any_comments' not in CONTEXTS:
                 # User did upload some photos - thank him/her and ask for a comment
                 if intent == 'media_received':
                     # If user uploaded several images - respond only to the 1st one
                     if 'last_media_input' not in CONTEXTS:
                         if 'any_comments' not in CONTEXTS:
                             CONTEXTS.append('any_comments')
+                            CONTEXTS.remove('last_input_media')
                         # message28 = 'Thank you!'
                         # message29 = 'Any comments (how did you get'
                         # message30 = ', what did you feel, any messages for future'
@@ -2560,9 +2599,9 @@ def main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=No
                                 "payload": L10N['message45'][USER_LANGUAGE]
                             },
                             {
-                                # message46 = "You got"
-                                "title": "{} {}?".format(L10N['message46'][USER_LANGUAGE], OURTRAVELLER),
-                                # message85 = "You got fellowtraveler"
+                                # message46 = "I got"
+                                "title": "{} {}!".format(L10N['message46'][USER_LANGUAGE], OURTRAVELLER),
+                                # message85 = "I got fellowtraveler"
                                 "payload": L10N['message85'][USER_LANGUAGE]
                             }
                         ])
@@ -2580,9 +2619,9 @@ def main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=No
                                 "payload": L10N['message45'][USER_LANGUAGE]
                             },
                             {
-                                # message46 = "You got"
-                                "title": "{} {}?".format(L10N['message46'][USER_LANGUAGE], OURTRAVELLER),
-                                # message85 = "You got fellowtraveler"
+                                # message46 = "I got"
+                                "title": "{} {}!".format(L10N['message46'][USER_LANGUAGE], OURTRAVELLER),
+                                # message85 = "I got fellowtraveler"
                                 "payload": L10N['message85'][USER_LANGUAGE]
                             }
                         ])
@@ -2692,12 +2731,15 @@ def message_webhook():
                                         #sender_action(user_id, 'typing_on')
                                         user_wrote = message.get('message').get('text')#.encode('unicode_escape')
 
+                                        '''
                                         # Ugly solution agains duplicate responses to same user's commands (due to not confirming
                                         # messages receipt from FB in 20sec) - need to use some multythreading or smth like that
                                         command_number = message.get('message').get('seq')
                                         if command_number != LAST_COMMAND:
                                             LAST_COMMAND = command_number
                                             text_handler(user_id, from_user, user_wrote)
+                                        '''
+                                        text_handler(user_id, from_user, user_wrote)
 
                                     # Attachments
                                     if message.get('message').get('attachments'):
@@ -2707,16 +2749,20 @@ def message_webhook():
                                             if attachment.get('type') == 'image' and not attachment.get('payload').get(
                                                     'sticker_id'):
                                                 img_url = attachment.get('payload').get('url')
+                                                print('User uploaded a photo, url: {}'.format(img_url))
                                                 #send_message(user_id, {'text': 'Img url "{}'.format(img_url)})
                                                 #sender_action(user_id, 'mark_seen')
                                                 #sender_action(user_id, 'typing_on')
 
+                                                '''
                                                 # Ugly solution agains duplicate responses to same user's commands (due to not confirming
                                                 # messages receipt from FB in 20sec) - need to use some multythreading or smth like that
                                                 command_number = message.get('message').get('seq')
                                                 if command_number != LAST_COMMAND:
                                                     LAST_COMMAND = command_number
                                                     photo_handler(user_id, from_user, img_url)
+                                                '''
+                                                photo_handler(user_id, from_user, img_url)
 
                                             # Location
                                             elif attachment.get('type') == 'location':
@@ -2725,22 +2771,28 @@ def message_webhook():
                                                 #sender_action(user_id, 'mark_seen')
                                                 #sender_action(user_id, 'typing_on')
 
+                                                '''
                                                 # Ugly solution agains duplicate responses to same user's commands (due to not confirming
                                                 # messages receipt from FB in 20sec) - need to use some multythreading or smth like that
                                                 command_number = message.get('message').get('seq')
                                                 if command_number != LAST_COMMAND:
                                                     LAST_COMMAND = command_number
                                                     location_handler(user_id, from_user, latitude, longitude)
+                                                '''
+                                                location_handler(user_id, from_user, latitude, longitude)
 
                                             # Other content types - audio, file, stickers (as images but with field 'sticker_id')
                                             else:
                                                 print('Other content types')
+                                                '''
                                                 # Ugly solution agains duplicate responses to same user's commands (due to not confirming
                                                 # messages receipt from FB in 20sec) - need to use some multythreading or smth like that
                                                 command_number = message.get('message').get('seq')
                                                 if command_number != LAST_COMMAND:
                                                     LAST_COMMAND = command_number
                                                     other_content_types_handler(user_id, from_user)
+                                                '''
+                                                other_content_types_handler(user_id, from_user)
 
 
                             # Button clicks; persistent menu and 'Getting started' button send fixed postback in English,

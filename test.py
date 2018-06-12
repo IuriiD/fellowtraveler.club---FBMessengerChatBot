@@ -137,16 +137,47 @@ def save_static_map(traveller):
         print('save_static_map() exception: {}'.format(e))
         return False
 
-user_id = '1953498254661052'
-print(save_static_map('Teddy'))
+def img_to_fb_and_get_id(image_url):
+    '''
+        Function uploads an image from image_url to FB's servers and gets an ID for it
+    '''
+    r = requests.post('https://graph.facebook.com/v2.6/me/message_attachments',
+                        params = {'access_token': FB_ACCESS_TOKEN},
+                        data = json.dumps(
+                            {
+                                'message': {
+                                    'attachment': {
+                                        'type': 'image',
+                                        'payload': {
+                                            'is_reusable': True,
+                                            'url': image_url
+                                        }
+                                    }
+                                }
+                            }
+                        ),
+                        headers={'Content-type': 'application/json'}
+                      )
+    r_json = json.loads(r.text)
+    if 'error' in r_json:
+        print(r_json)
+        return False
+    else:
+        return r_json['attachment_id']
 
+print(img_to_fb_and_get_id('https://iuriid.github.io/img/ft-5.jpg'))
+
+
+user_id = '1953498254661052'
+#print(save_static_map('Teddy'))
+'''
 curl -X POST -H "Content-Type: application/json" -d '{
   "recipient":{
     "id":"<PSID>"
   },
   "sender_action":"typing_on"
 }' "https://graph.facebook.com/v2.6/me/messages?access_token=<PAGE_ACCESS_TOKEN>"
-
+'''
 
 '''
 lat = '49.4410043'
